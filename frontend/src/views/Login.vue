@@ -29,6 +29,30 @@
             @submit.prevent="handleLogin"
           >
             <div class="form-group">
+              <label class="form-label">登录类型</label>
+              <el-form-item prop="loginType">
+                <el-radio-group 
+                  v-model="loginForm.loginType" 
+                  class="login-type-group"
+                  size="large"
+                >
+                  <el-radio label="管理员" class="login-type-option">
+                    <div class="type-content">
+                      <el-icon><UserFilled /></el-icon>
+                      <span>管理员登录</span>
+                    </div>
+                  </el-radio>
+                  <el-radio label="操作员" class="login-type-option">
+                    <div class="type-content">
+                      <el-icon><User /></el-icon>
+                      <span>操作员登录</span>
+                    </div>
+                  </el-radio>
+                </el-radio-group>
+              </el-form-item>
+            </div>
+
+            <div class="form-group">
               <label class="form-label">用户名</label>
               <el-form-item prop="username">
                 <el-input
@@ -99,7 +123,7 @@
 import { ref, reactive } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
-import { Monitor, User, Lock, Right } from '@element-plus/icons-vue'
+import { Monitor, User, UserFilled, Lock, Right } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/store/modules/auth'
 import type { LoginForm } from '@/types/user'
 
@@ -113,11 +137,15 @@ const loginFormRef = ref<FormInstance>()
 // 登录表单数据
 const loginForm = reactive<LoginForm>({
   username: '',
-  password: ''
+  password: '',
+  loginType: '管理员'
 })
 
 // 表单验证规则
 const loginRules: FormRules = {
+  loginType: [
+    { required: true, message: '请选择登录类型', trigger: 'change' }
+  ],
   username: [
     { required: true, message: '请输入用户名', trigger: 'blur' },
     { min: 2, max: 50, message: '用户名长度应在2-50个字符', trigger: 'blur' }
@@ -139,13 +167,26 @@ const handleLogin = async () => {
     await loginFormRef.value.validate()
     loading.value = true
     
-    await authStore.loginAction(loginForm)
+    const loginResponse = await authStore.loginAction(loginForm)
+    const user = loginResponse.user
+    
+    // 验证用户类型是否匹配
+    if (user.type !== loginForm.loginType) {
+      ElMessage.error(`您的账户类型是"${user.type}"，请选择正确的登录类型`)
+      return
+    }
     
     ElMessage.success('登录成功！')
     
-    // 重定向到原来要访问的页面或首页
-    const redirect = route.query.redirect as string
-    router.push(redirect || '/dashboard')
+    // 根据用户类型进行不同的跳转
+    if (user.type === '管理员') {
+      // 管理员直接进入主页面
+      const redirect = route.query.redirect as string
+      router.push(redirect || '/dashboard')
+    } else if (user.type === '操作员') {
+      // 操作员进入角色选择界面
+      router.push('/role-selection')
+    }
     
   } catch (error: any) {
     console.error('登录失败:', error)
@@ -333,6 +374,75 @@ const handleLogin = async () => {
     margin-bottom: 0;
   }
   
+  .login-type-group {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    
+    :deep(.el-radio) {
+      margin-right: 0;
+      width: 100%;
+    }
+    
+    .login-type-option {
+      width: 100%;
+      
+      :deep(.el-radio__input) {
+        display: none;
+      }
+      
+      :deep(.el-radio__label) {
+        width: 100%;
+        padding: 0;
+      }
+      
+      .type-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        padding: 16px 12px;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        background: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        
+        .el-icon {
+          font-size: 24px;
+          color: #667eea;
+        }
+        
+        span {
+          font-size: 14px;
+          font-weight: 500;
+          color: #374151;
+        }
+      }
+      
+      &:hover .type-content {
+        border-color: #d1d5db;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+      
+      :deep(.el-radio__input.is-checked) + .el-radio__label .type-content {
+        border-color: #667eea;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        
+        .el-icon {
+          color: white;
+        }
+        
+        span {
+          color: white;
+        }
+      }
+    }
+  }
+
   .login-button {
     width: 100%;
     height: 52px;

@@ -85,6 +85,14 @@ export const useAuthStore = defineStore('auth', () => {
     
     // 操作员权限检查
     if (user.value.type === '操作员') {
+      const selectedRole = localStorage.getItem('selectedRole')
+      
+      // 操作员必须选择角色后才有权限
+      if (!selectedRole) return false
+      
+      // 检查操作员的角色是否匹配
+      if (selectedRole !== user.value.role) return false
+      
       const operatorPermissions = ['user:read', 'task:all', 'device:all', 'desktop:all']
       return operatorPermissions.includes(permission)
     }
@@ -92,7 +100,23 @@ export const useAuthStore = defineStore('auth', () => {
     return false
   }
 
-  return {
+  // 检查角色权限
+  const hasRolePermission = (requiredRole: string): boolean => {
+    if (!user.value) return false
+    
+    // 管理员拥有所有角色权限
+    if (user.value.type === '管理员') return true
+    
+    // 操作员角色权限检查
+    if (user.value.type === '操作员') {
+      const selectedRole = localStorage.getItem('selectedRole')
+      return selectedRole === requiredRole && selectedRole === user.value.role
+    }
+    
+    return false
+  }
+
+      return {
     // 状态
     token,
     user,
@@ -108,6 +132,7 @@ export const useAuthStore = defineStore('auth', () => {
     logoutAction,
     fetchCurrentUser,
     updateUser,
-    hasPermission
+    hasPermission,
+    hasRolePermission
   }
 }) 

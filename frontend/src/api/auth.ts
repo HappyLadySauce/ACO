@@ -6,6 +6,7 @@ export const login = (data: LoginForm) => {
   const formData = new FormData()
   formData.append('username', data.username)
   formData.append('password', data.password)
+  formData.append('login_type', data.loginType)
   
   return request.post<LoginResponse>('/auth/login', formData, {
     headers: {

@@ -13,6 +13,16 @@ const routes = [
     }
   },
   {
+    path: '/role-selection',
+    name: 'RoleSelection',
+    component: () => import('@/views/RoleSelection.vue'),
+    meta: { 
+      requiresAuth: true,
+      requiresOperator: true,
+      title: '角色选择'
+    }
+  },
+  {
     path: '/',
     redirect: '/login'
   },
@@ -145,6 +155,28 @@ router.beforeEach(async (to, from, next) => {
     ElMessage.error('权限不足，需要操作员或更高权限')
     next('/dashboard')
     return
+  }
+
+  // 特殊处理：操作员访问角色选择页面
+  if (to.name === 'RoleSelection') {
+    const user = authStore.user
+    if (user && user.type === '管理员') {
+      // 管理员不需要角色选择，直接跳转到主页
+      next('/dashboard')
+      return
+    }
+  }
+
+  // 特殊处理：操作员登录后需要先选择角色
+  if (to.name !== 'RoleSelection' && to.meta.requiresAuth) {
+    const user = authStore.user
+    const selectedRole = localStorage.getItem('selectedRole')
+    
+    if (user && user.type === '操作员' && !selectedRole) {
+      // 操作员未选择角色，重定向到角色选择页面
+      next('/role-selection')
+      return
+    }
   }
 
   next()

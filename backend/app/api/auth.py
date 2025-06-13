@@ -1,5 +1,5 @@
 from datetime import timedelta
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Form
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from app.database import get_db
@@ -14,6 +14,7 @@ router = APIRouter()
 @router.post("/login", response_model=Token)
 async def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
+    login_type: str = Form(...),
     db: Session = Depends(get_db)
 ) -> Token:
     """用户登录"""
@@ -29,6 +30,14 @@ async def login_for_access_token(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="账户已被禁用",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # 验证用户类型是否匹配
+    if user.type != login_type:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"您的账户类型是\"{user.type}\"，请选择正确的登录类型",
             headers={"WWW-Authenticate": "Bearer"},
         )
     

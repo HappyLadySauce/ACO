@@ -14,6 +14,7 @@ export interface User {
 export interface LoginForm {
   username: string
   password: string
+  loginType: string
 }
 
 // 用户创建表单

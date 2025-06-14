@@ -4,10 +4,16 @@
       <template #header>
         <div class="card-header">
           <span>用户管理</span>
-          <el-button type="primary" @click="handleAdd">
-            <el-icon><Plus /></el-icon>
-            新增用户
-          </el-button>
+          <div class="header-actions">
+            <el-button type="primary" @click="handleBulkImport">
+              <el-icon><Upload /></el-icon>
+              批量导入用户
+            </el-button>
+            <el-button type="primary" @click="handleAdd">
+              <el-icon><Plus /></el-icon>
+              新增用户
+            </el-button>
+          </div>
         </div>
       </template>
 
@@ -89,30 +95,37 @@
       </div>
     </el-card>
 
-    <!-- 用户编辑对话框 -->
+    <!-- 新增/编辑用户对话框 -->
     <el-dialog
       v-model="dialogVisible"
-      :title="isEdit ? '编辑用户' : '新增用户'"
-      width="600px"
+      :title="isEdit ? '编辑用户' : '创建新用户'"
+      width="500px"
+      :close-on-click-modal="false"
     >
       <el-form
         ref="formRef"
         :model="userForm"
         :rules="rules"
-        label-width="100px"
+        label-width="80px"
+        label-position="left"
       >
         <el-form-item label="用户名" prop="username">
-          <el-input v-model="userForm.username" placeholder="请输入用户名" />
+          <el-input 
+            v-model="userForm.username" 
+            placeholder="请输入用户名"
+            :disabled="isEdit"
+          />
         </el-form-item>
         <el-form-item label="密码" prop="password" v-if="!isEdit">
           <el-input 
             v-model="userForm.password" 
             type="password" 
-            placeholder="请输入密码" 
+            placeholder="请输入密码"
+            show-password
           />
         </el-form-item>
         <el-form-item label="角色" prop="role">
-          <el-select v-model="userForm.role" placeholder="选择角色">
+          <el-select v-model="userForm.role" placeholder="选择角色" style="width: 100%">
             <el-option label="网络工程师" value="网络工程师" />
             <el-option label="系统架构师" value="系统架构师" />
             <el-option label="系统规划与管理师" value="系统规划与管理师" />
@@ -120,13 +133,13 @@
           </el-select>
         </el-form-item>
         <el-form-item label="类型" prop="type">
-          <el-select v-model="userForm.type" placeholder="选择用户类型">
+          <el-select v-model="userForm.type" placeholder="选择用户类型" style="width: 100%">
             <el-option label="管理员" value="管理员" />
-            <el-option label="操作员" value="操作员" />
+            <el-option label="普通用户" value="操作员" />
           </el-select>
         </el-form-item>
         <el-form-item label="状态" prop="status">
-          <el-select v-model="userForm.status" placeholder="选择状态">
+          <el-select v-model="userForm.status" placeholder="选择状态" style="width: 100%">
             <el-option label="激活" value="active" />
             <el-option label="未激活" value="inactive" />
           </el-select>
@@ -142,15 +155,137 @@
         </span>
       </template>
     </el-dialog>
+
+    <!-- 批量导入用户对话框 -->
+    <el-dialog
+      v-model="bulkImportVisible"
+      title="批量导入用户"
+      width="600px"
+      :close-on-click-modal="false"
+    >
+      <div class="import-content">
+        <div class="upload-section">
+          <div class="upload-header">
+            <span>选择导入文件</span>
+            <el-button 
+              type="text" 
+              @click="downloadTemplate"
+              :loading="downloadLoading"
+            >
+              <el-icon><Download /></el-icon>
+              下载导入模板
+            </el-button>
+          </div>
+          <el-upload
+            class="upload-area"
+            drag
+            :auto-upload="false"
+            :show-file-list="false"
+            :before-upload="beforeUpload"
+            accept=".xlsx,.xls"
+            @change="handleFileChange"
+          >
+            <div class="upload-content">
+              <el-icon class="upload-icon"><Plus /></el-icon>
+              <div class="upload-text">
+                <div class="main-text">添加文件</div>
+                <div class="sub-text">
+                  请选择要导入的Excel文件，支持xls、xlsx格式
+                </div>
+              </div>
+            </div>
+          </el-upload>
+          
+          <div v-if="selectedFile" class="file-info">
+            <div class="file-name">
+              <el-icon><Document /></el-icon>
+              {{ selectedFile.name }}
+            </div>
+            <el-button 
+              type="text" 
+              @click="clearFile"
+              class="clear-btn"
+            >
+              <el-icon><Delete /></el-icon>
+              清除选择
+            </el-button>
+          </div>
+          
+          <div v-if="!selectedFile" class="no-file-tips">
+            尚未选择文件
+          </div>
+        </div>
+        
+        <div class="template-tips">
+          <p>下载标准的用户导入Excel模板，包含用户名、密码、角色、用户类型、状态等字段。</p>
+        </div>
+      </div>
+      
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="bulkImportVisible = false">取消</el-button>
+          <el-button 
+            type="primary" 
+            @click="handleImport"
+            :loading="importLoading"
+            :disabled="!selectedFile"
+          >
+            导入
+          </el-button>
+        </span>
+      </template>
+    </el-dialog>
+
+    <!-- 导入结果对话框 -->
+    <el-dialog
+      v-model="resultVisible"
+      title="导入结果"
+      width="600px"
+    >
+      <div class="import-result">
+        <div class="result-summary">
+          <div class="success-info">
+            <el-icon color="#67C23A"><SuccessFilled /></el-icon>
+            <span>成功导入 {{ importResult.success_count }} 个用户</span>
+          </div>
+          <div v-if="importResult.fail_count > 0" class="fail-info">
+            <el-icon color="#F56C6C"><CircleCloseFilled /></el-icon>
+            <span>失败 {{ importResult.fail_count }} 个用户</span>
+          </div>
+        </div>
+        
+        <div v-if="importResult.failed_users.length > 0" class="failed-list">
+          <h4>失败列表：</h4>
+          <el-table :data="importResult.failed_users" style="width: 100%">
+            <el-table-column prop="username" label="用户名" />
+            <el-table-column prop="error" label="失败原因" />
+          </el-table>
+        </div>
+      </div>
+      
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button type="primary" @click="resultVisible = false">
+            确定
+          </el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
-import { Plus, Search } from '@element-plus/icons-vue'
-import { getUserList, createUser, updateUser, deleteUser } from '@/api/user'
-import type { UserForm, UserUpdate } from '@/types/user'
+import { ElMessage, ElMessageBox, type FormInstance, type UploadFile } from 'element-plus'
+import { 
+  Plus, Search, Upload, Download, Document, Delete, 
+  SuccessFilled, CircleCloseFilled 
+} from '@element-plus/icons-vue'
+import { 
+  getUserList, createUser, updateUser, deleteUser, 
+  bulkImportUsers, downloadUserTemplate 
+} from '@/api/user'
+import type { UserForm, UserUpdate, BulkImportResult } from '@/types/user'
 
 interface User {
   id: number
@@ -164,8 +299,13 @@ interface User {
 
 const loading = ref(false)
 const dialogVisible = ref(false)
+const bulkImportVisible = ref(false)
+const resultVisible = ref(false)
 const isEdit = ref(false)
 const formRef = ref<FormInstance>()
+const downloadLoading = ref(false)
+const importLoading = ref(false)
+const selectedFile = ref<File | null>(null)
 
 const searchForm = reactive({
   username: '',
@@ -187,6 +327,13 @@ const pagination = reactive({
   total: 0
 })
 
+const importResult = reactive<BulkImportResult>({
+  success_count: 0,
+  fail_count: 0,
+  failed_users: [],
+  message: ''
+})
+
 const users = ref<User[]>([])
 
 const rules = {
@@ -202,7 +349,7 @@ const rules = {
     { required: true, message: '请选择角色', trigger: 'change' }
   ],
   type: [
-    { required: true, message: '请输入用户类型', trigger: 'blur' }
+    { required: true, message: '请选择用户类型', trigger: 'change' }
   ],
   status: [
     { required: true, message: '请选择状态', trigger: 'change' }
@@ -240,12 +387,10 @@ const loadUsers = async () => {
     
     const response = await getUserList(params)
     users.value = response.data || []
-    // 注意：如果后端没有返回total，这里需要单独获取
     pagination.total = users.value.length
   } catch (error) {
     console.error('加载用户列表失败:', error)
     ElMessage.error('加载用户列表失败')
-    // 如果API调用失败，使用模拟数据作为后备
     users.value = [
       {
         id: 1,
@@ -311,7 +456,6 @@ const handleDelete = async (row: User) => {
     loadUsers()
   } catch (error: any) {
     if (error === 'cancel') {
-      // 用户取消了删除操作
       return
     }
     console.error('删除用户失败:', error)
@@ -327,7 +471,6 @@ const handleSubmit = async () => {
     await formRef.value.validate()
     
     if (isEdit.value) {
-      // 更新用户
       const updateData: UserUpdate = {
         role: userForm.role,
         type: userForm.type,
@@ -336,7 +479,6 @@ const handleSubmit = async () => {
       await updateUser(userForm.id, updateData)
       ElMessage.success('更新成功')
     } else {
-      // 创建用户
       const createData: UserForm = {
         username: userForm.username,
         password: userForm.password,
@@ -376,6 +518,81 @@ const handleCurrentChange = (val: number) => {
   loadUsers()
 }
 
+// 批量导入相关方法
+const handleBulkImport = () => {
+  bulkImportVisible.value = true
+  selectedFile.value = null
+}
+
+const downloadTemplate = async () => {
+  downloadLoading.value = true
+  try {
+    const response = await downloadUserTemplate()
+    const blob = new Blob([response.data], { 
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+    })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'user_import_template.xlsx'
+    link.click()
+    window.URL.revokeObjectURL(url)
+    ElMessage.success('模板下载成功')
+  } catch (error) {
+    console.error('下载模板失败:', error)
+    ElMessage.error('下载模板失败')
+  } finally {
+    downloadLoading.value = false
+  }
+}
+
+const beforeUpload = (file: File) => {
+  const isExcel = file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || 
+                  file.type === 'application/vnd.ms-excel'
+  if (!isExcel) {
+    ElMessage.error('只能上传Excel文件!')
+    return false
+  }
+  const isLt10M = file.size / 1024 / 1024 < 10
+  if (!isLt10M) {
+    ElMessage.error('文件大小不能超过10MB!')
+    return false
+  }
+  return false // 阻止自动上传
+}
+
+const handleFileChange = (file: UploadFile) => {
+  if (file.raw) {
+    selectedFile.value = file.raw
+  }
+}
+
+const clearFile = () => {
+  selectedFile.value = null
+}
+
+const handleImport = async () => {
+  if (!selectedFile.value) {
+    ElMessage.error('请选择要导入的文件')
+    return
+  }
+  
+  importLoading.value = true
+  try {
+    const response = await bulkImportUsers(selectedFile.value)
+    Object.assign(importResult, response.data)
+    bulkImportVisible.value = false
+    resultVisible.value = true
+    loadUsers() // 刷新用户列表
+  } catch (error: any) {
+    console.error('批量导入失败:', error)
+    const message = error?.response?.data?.detail || '批量导入失败'
+    ElMessage.error(message)
+  } finally {
+    importLoading.value = false
+  }
+}
+
 onMounted(() => {
   loadUsers()
 })
@@ -387,6 +604,11 @@ onMounted(() => {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    
+    .header-actions {
+      display: flex;
+      gap: 10px;
+    }
   }
 
   .search-bar {
@@ -399,6 +621,156 @@ onMounted(() => {
   .pagination {
     margin-top: 20px;
     text-align: right;
+  }
+}
+
+.import-content {
+  .upload-section {
+    margin-bottom: 20px;
+    
+    .upload-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      
+      span {
+        font-weight: 500;
+        color: #303133;
+      }
+    }
+    
+    .upload-area {
+      :deep(.el-upload-dragger) {
+        width: 100%;
+        height: 120px;
+        border: 2px dashed #d9d9d9;
+        border-radius: 6px;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        transition: border-color 0.2s cubic-bezier(0.645, 0.045, 0.355, 1);
+        
+        &:hover {
+          border-color: #409eff;
+        }
+      }
+    }
+    
+    .upload-content {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      
+      .upload-icon {
+        font-size: 28px;
+        color: #8c939d;
+        margin-right: 16px;
+      }
+      
+      .upload-text {
+        .main-text {
+          color: #606266;
+          font-size: 14px;
+          text-align: center;
+        }
+        
+        .sub-text {
+          color: #909399;
+          font-size: 12px;
+          margin-top: 2px;
+          text-align: center;
+        }
+      }
+    }
+    
+    .file-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      background: #f0f9ff;
+      border: 1px solid #b3d8ff;
+      border-radius: 4px;
+      margin-top: 10px;
+      
+      .file-name {
+        display: flex;
+        align-items: center;
+        color: #409eff;
+        font-size: 14px;
+        
+        .el-icon {
+          margin-right: 5px;
+        }
+      }
+      
+      .clear-btn {
+        color: #f56c6c;
+        font-size: 12px;
+      }
+    }
+    
+    .no-file-tips {
+      text-align: center;
+      color: #909399;
+      font-size: 12px;
+      margin-top: 10px;
+    }
+  }
+  
+  .template-tips {
+    padding: 12px;
+    background: #f0f9ff;
+    border-left: 4px solid #409eff;
+    border-radius: 4px;
+    
+    p {
+      margin: 0;
+      color: #409eff;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+  }
+}
+
+.import-result {
+  .result-summary {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+    
+    .success-info,
+    .fail-info {
+      display: flex;
+      align-items: center;
+      
+      .el-icon {
+        margin-right: 8px;
+        font-size: 16px;
+      }
+      
+      span {
+        font-size: 14px;
+      }
+    }
+    
+    .success-info span {
+      color: #67C23A;
+    }
+    
+    .fail-info span {
+      color: #F56C6C;
+    }
+  }
+  
+  .failed-list {
+    h4 {
+      margin: 0 0 10px 0;
+      color: #303133;
+      font-size: 14px;
+    }
   }
 }
 </style> 

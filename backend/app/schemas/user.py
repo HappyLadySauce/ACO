@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 class UserBase(BaseModel):
@@ -45,11 +45,18 @@ class UserProfile(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 class Token(BaseModel):
-    """令牌模式"""
+    """访问令牌模式"""
     access_token: str
     token_type: str
     user: UserResponse
 
-class TokenData(BaseModel):
-    """令牌数据模式"""
-    username: Optional[str] = None 
+class UserBulkCreate(BaseModel):
+    """批量创建用户模式"""
+    users: List[UserCreate]
+
+class BulkImportResult(BaseModel):
+    """批量导入结果"""
+    success_count: int
+    fail_count: int
+    failed_users: List[dict]
+    message: str 

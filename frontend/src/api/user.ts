@@ -1,5 +1,5 @@
 import request from '@/utils/request'
-import type { User, UserForm, UserUpdate } from '@/types/user'
+import type { User, UserForm, UserUpdate, BulkImportResult } from '@/types/user'
 
 // 获取用户列表
 export const getUserList = (params?: {
@@ -44,4 +44,22 @@ export const getUserDetail = (id: number) => {
 // 更新用户状态
 export const updateUserStatus = (id: number, status: string) => {
   return request.put<User>(`/users/${id}`, { status })
+}
+
+// 批量导入用户
+export const bulkImportUsers = (file: File) => {
+  const formData = new FormData()
+  formData.append('file', file)
+  return request.post<BulkImportResult>('/users/bulk-import', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}
+
+// 下载用户导入模板
+export const downloadUserTemplate = () => {
+  return request.get('/users/template/download', {
+    responseType: 'blob'
+  })
 } 

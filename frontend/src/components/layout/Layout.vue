@@ -98,9 +98,46 @@
           <span class="nav-text">用户管理</span>
         </div>
         
-        <div class="nav-item" :class="{ active: $route.path === '/tasks' }" @click="$router.push('/tasks')">
-          <img src="@/assets/icon/任务.png" alt="任务管理" class="nav-icon-img" />
-          <span class="nav-text">任务管理</span>
+        <!-- 任务管理模块 -->
+        <div class="nav-group">
+          <div 
+            class="nav-item nav-parent" 
+            :class="{ active: isTaskMenuActive, expanded: taskMenuExpanded }" 
+            @click="toggleTaskMenu"
+          >
+            <img src="@/assets/icon/任务.png" alt="任务管理" class="nav-icon-img" />
+            <span class="nav-text">任务管理</span>
+            <el-icon class="expand-icon" :class="{ rotated: taskMenuExpanded }">
+              <ArrowRight />
+            </el-icon>
+          </div>
+          
+          <div class="nav-submenu" v-show="taskMenuExpanded">
+            <div 
+              class="nav-item nav-child" 
+              :class="{ active: $route.path === '/tasks' }" 
+              @click="$router.push('/tasks')"
+            >
+              <span class="nav-text">任务管理</span>
+            </div>
+            
+            <div 
+              class="nav-item nav-child" 
+              :class="{ active: $route.path === '/task-assignment' }" 
+              @click="$router.push('/task-assignment')"
+              v-if="userStore.isAdmin"
+            >
+              <span class="nav-text">任务下发</span>
+            </div>
+            
+            <div 
+              class="nav-item nav-child" 
+              :class="{ active: $route.path === '/task-progress' }" 
+              @click="$router.push('/task-progress')"
+            >
+              <span class="nav-text">任务进度</span>
+            </div>
+          </div>
         </div>
         
         <div class="nav-item" :class="{ active: $route.path === '/devices' }" @click="$router.push('/devices')">
@@ -135,21 +172,39 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search } from '@element-plus/icons-vue'
+import { Search, ArrowRight } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/store/modules/auth'
 
 const router = useRouter()
+const route = useRoute()
 const userStore = useAuthStore()
 
 // 响应式数据
 const searchValue = ref('')
 const notificationCount = ref(5)
+const taskMenuExpanded = ref(false)
+
+// 计算属性
+const isTaskMenuActive = computed(() => {
+  return ['/tasks', '/task-assignment', '/task-progress'].includes(route.path)
+})
+
+// 监听路由变化，自动展开相关菜单
+watch(() => route.path, (newPath: string) => {
+  if (['/tasks', '/task-assignment', '/task-progress'].includes(newPath)) {
+    taskMenuExpanded.value = true
+  }
+}, { immediate: true })
 
 const goToProfile = () => {
   router.push('/profile')
+}
+
+const toggleTaskMenu = () => {
+  taskMenuExpanded.value = !taskMenuExpanded.value
 }
 
 const handleLogout = async () => {
@@ -432,12 +487,15 @@ const handleSettings = () => {
 .sidebar-nav {
   padding: 24px 0;
   
+  .nav-group {
+    margin: 4px 12px;
+  }
+  
   .nav-item {
     display: flex;
     align-items: center;
     gap: 16px;
     padding: 16px 24px;
-    margin: 4px 12px;
     border-radius: 12px;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -465,6 +523,38 @@ const handleSettings = () => {
         height: 24px;
         background: #3498db;
         border-radius: 2px;
+      }
+    }
+    
+    &.nav-parent {
+      .expand-icon {
+        margin-left: auto;
+        font-size: 14px;
+        transition: transform 0.3s ease;
+        
+        &.rotated {
+          transform: rotate(90deg);
+        }
+      }
+    }
+    
+    &.nav-child {
+      margin: 2px 0;
+      padding: 12px 24px 12px 64px;
+      font-size: 13px;
+      
+      &:hover {
+        transform: translateX(2px);
+        background: rgba(52, 152, 219, 0.08);
+      }
+      
+      &.active {
+        background: rgba(52, 152, 219, 0.15);
+        color: #3498db;
+        
+        &::before {
+          display: none;
+        }
       }
     }
     
@@ -497,6 +587,13 @@ const handleSettings = () => {
       font-size: 14px;
       font-weight: 500;
     }
+  }
+  
+  .nav-submenu {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    margin-top: 4px;
+    overflow: hidden;
   }
 }
 

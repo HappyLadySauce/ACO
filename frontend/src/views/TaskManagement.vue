@@ -21,12 +21,19 @@
               clearable
             />
           </el-form-item>
-          <el-form-item label="状态">
-            <el-select v-model="searchForm.status" placeholder="选择状态" clearable>
-              <el-option label="未开始" value="未分配" />
-              <el-option label="进行中" value="进行中" />
-              <el-option label="已完成" value="已完成" />
-              <el-option label="已暂停" value="已暂停" />
+          <el-form-item label="任务类型">
+            <el-select v-model="searchForm.type" placeholder="选择任务类型" clearable>
+              <el-option label="运维监控任务" value="运维监控任务" />
+              <el-option label="运维管理任务" value="运维管理任务" />
+              <el-option label="开发测试任务" value="开发测试任务" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="阶段">
+            <el-select v-model="searchForm.phase" placeholder="选择任务阶段" clearable>
+              <el-option label="计划阶段" value="计划阶段" />
+              <el-option label="执行阶段" value="执行阶段" />
+              <el-option label="验收阶段" value="验收阶段" />
+              <el-option label="完成阶段" value="完成阶段" />
             </el-select>
           </el-form-item>
           <el-form-item>
@@ -41,20 +48,22 @@
 
       <!-- 任务表格 -->
       <el-table :data="tasks" v-loading="loading" style="width: 100%">
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="name" label="任务名称" />
-        <el-table-column prop="type" label="任务类型" />
-        <el-table-column prop="phase" label="阶段" />
-        <el-table-column prop="status" label="状态">
+        <el-table-column prop="id" label="任务ID" width="80" />
+        <el-table-column prop="name" label="任务名称" min-width="120" />
+        <el-table-column prop="type" label="任务类型" width="120" />
+        <el-table-column prop="phase" label="阶段" width="100" />
+        <el-table-column prop="description" label="任务描述" show-overflow-tooltip min-width="150" />
+        <el-table-column label="执行人" width="120">
           <template #default="scope">
-            <el-tag :type="getStatusType(scope.row.status)">
-              {{ scope.row.status }}
-            </el-tag>
+            <span v-if="scope.row.assignments && scope.row.assignments.length > 0">
+              {{ scope.row.assignments.map((a: any) => a.username).join(', ') }}
+            </span>
+            <el-tag v-else type="info" size="small">未分配</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="description" label="描述" show-overflow-tooltip />
-        <el-table-column prop="create_time" label="创建时间" />
-        <el-table-column label="操作" width="200">
+        <el-table-column prop="create_time" label="创建时间" width="150" />
+        <el-table-column prop="update_time" label="更新时间" width="150" />
+        <el-table-column label="操作" width="160" fixed="right">
           <template #default="scope">
             <el-button size="small" @click="handleEdit(scope.row)">
               编辑
@@ -100,20 +109,21 @@
           <el-input v-model="taskForm.name" placeholder="请输入任务名称" />
         </el-form-item>
         <el-form-item label="任务类型" prop="type">
-          <el-input v-model="taskForm.type" placeholder="请输入任务类型" />
-        </el-form-item>
-        <el-form-item label="阶段" prop="phase">
-          <el-input v-model="taskForm.phase" placeholder="请输入任务阶段" />
-        </el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-select v-model="taskForm.status" placeholder="选择状态">
-            <el-option label="未分配" value="未分配" />
-            <el-option label="进行中" value="进行中" />
-            <el-option label="已完成" value="已完成" />
-            <el-option label="已暂停" value="已暂停" />
+          <el-select v-model="taskForm.type" placeholder="选择任务类型">
+            <el-option label="运维监控任务" value="运维监控任务" />
+            <el-option label="运维管理任务" value="运维管理任务" />
+            <el-option label="开发测试任务" value="开发测试任务" />
           </el-select>
         </el-form-item>
-        <el-form-item label="描述" prop="description">
+        <el-form-item label="阶段" prop="phase">
+          <el-select v-model="taskForm.phase" placeholder="选择任务阶段">
+            <el-option label="计划阶段" value="计划阶段" />
+            <el-option label="执行阶段" value="执行阶段" />
+            <el-option label="验收阶段" value="验收阶段" />
+            <el-option label="完成阶段" value="完成阶段" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="任务描述" prop="description">
           <el-input 
             v-model="taskForm.description" 
             type="textarea"
@@ -139,6 +149,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
 import { Plus, Search } from '@element-plus/icons-vue'
+import { getTasks, getTasksCount, createTask, updateTask, deleteTask, getTask } from '@/api/task'
 
 interface Task {
   id: number
@@ -146,9 +157,9 @@ interface Task {
   type: string
   phase: string
   description: string
-  status: string
   create_time: string
   update_time: string
+  assignments?: any[]
 }
 
 const loading = ref(false)
@@ -158,7 +169,8 @@ const formRef = ref<FormInstance>()
 
 const searchForm = reactive({
   name: '',
-  status: ''
+  type: '',
+  phase: ''
 })
 
 const taskForm = reactive({
@@ -166,8 +178,7 @@ const taskForm = reactive({
   name: '',
   type: '',
   phase: '',
-  description: '',
-  status: '未分配'
+  description: ''
 })
 
 const pagination = reactive({
@@ -184,82 +195,70 @@ const rules = {
     { min: 2, max: 50, message: '任务名称长度在 2 到 50 个字符', trigger: 'blur' }
   ],
   type: [
-    { required: true, message: '请输入任务类型', trigger: 'blur' }
+    { required: true, message: '请选择任务类型', trigger: 'change' }
   ],
   phase: [
-    { required: true, message: '请输入任务阶段', trigger: 'blur' }
+    { required: true, message: '请选择任务阶段', trigger: 'change' }
   ],
-  status: [
-    { required: true, message: '请选择状态', trigger: 'change' }
+  description: [
+    { required: true, message: '请输入任务描述', trigger: 'blur' },
+    { min: 5, max: 500, message: '任务描述长度在 5 到 500 个字符', trigger: 'blur' }
   ]
-}
-
-const getStatusType = (status: string) => {
-  switch (status) {
-    case '已完成':
-      return 'success'
-    case '进行中':
-      return 'warning'
-    case '未分配':
-      return 'info'
-    case '已暂停':
-      return 'danger'
-    default:
-      return ''
-  }
 }
 
 const loadTasks = async () => {
   loading.value = true
   try {
-    // 模拟数据加载
-    tasks.value = [
-      {
-        id: 1,
-        name: '系统维护任务',
-        type: '维护',
-        phase: '执行阶段',
-        description: '对系统进行定期维护和检查',
-        status: '进行中',
-        create_time: '2024-01-15 10:30',
-        update_time: '2024-01-15 10:30'
-      },
-      {
-        id: 2,
-        name: '数据备份任务',
-        type: '备份',
-        phase: '准备阶段',
-        description: '进行重要数据的备份操作',
-        status: '已完成',
-        create_time: '2024-01-14 14:20',
-        update_time: '2024-01-14 16:30'
-      },
-      {
-        id: 3,
-        name: '安全检查任务',
-        type: '安全',
-        phase: '计划阶段',
-        description: '系统安全漏洞检查和修复',
-        status: '未分配',
-        create_time: '2024-01-13 09:15',
-        update_time: '2024-01-13 09:15'
-      }
-    ]
-    pagination.total = tasks.value.length
+    const response = await getTasks({
+      skip: (pagination.currentPage - 1) * pagination.pageSize,
+      limit: pagination.pageSize,
+      task_type: searchForm.type || undefined
+    })
+    
+    // 为每个任务获取分配信息
+    const tasksWithAssignments = await Promise.all(
+      (response.data || []).map(async (task) => {
+        try {
+          const taskDetail = await getTask(task.id)
+          return {
+            ...task,
+            assignments: taskDetail.data?.assignments || []
+          }
+        } catch (error) {
+          console.warn(`获取任务 ${task.id} 分配信息失败:`, error)
+          return {
+            ...task,
+            assignments: []
+          }
+        }
+      })
+    )
+    
+    tasks.value = tasksWithAssignments
+    
+    // 获取总数
+    const countResponse = await getTasksCount({
+      task_type: searchForm.type || undefined
+    })
+    pagination.total = countResponse.data?.count || 0
   } catch (error) {
     ElMessage.error('加载任务列表失败')
+    console.error('加载任务失败:', error)
   } finally {
     loading.value = false
   }
 }
 
 const handleSearch = () => {
+  pagination.currentPage = 1
   loadTasks()
 }
 
 const handleReset = () => {
   searchForm.name = ''
-  searchForm.status = ''
+  searchForm.type = ''
+  searchForm.phase = ''
+  pagination.currentPage = 1
   loadTasks()
 }
 
@@ -287,10 +286,14 @@ const handleDelete = async (row: Task) => {
       }
     )
     
+    await deleteTask(row.id)
     ElMessage.success('删除成功')
     loadTasks()
-  } catch (error) {
-    // 用户取消了删除操作
+  } catch (error: any) {
+    if (error?.message !== 'cancel') {
+      ElMessage.error('删除失败')
+      console.error('删除任务失败:', error)
+    }
   }
 }
 
@@ -299,11 +302,30 @@ const handleSubmit = async () => {
   
   try {
     await formRef.value.validate()
+    
+    if (isEdit.value) {
+      await updateTask(taskForm.id, {
+        name: taskForm.name,
+        type: taskForm.type,
+        phase: taskForm.phase,
+        description: taskForm.description
+      })
+    } else {
+      await createTask({
+        name: taskForm.name,
+        type: taskForm.type,
+        phase: taskForm.phase,
+        description: taskForm.description,
+        status: '未分配'
+      })
+    }
+    
     ElMessage.success(isEdit.value ? '更新成功' : '创建成功')
     dialogVisible.value = false
     loadTasks()
-  } catch (error) {
-    console.error('表单验证失败:', error)
+  } catch (error: any) {
+    ElMessage.error(isEdit.value ? '更新失败' : '创建失败')
+    console.error('保存任务失败:', error)
   }
 }
 
@@ -313,11 +335,11 @@ const resetForm = () => {
   taskForm.type = ''
   taskForm.phase = ''
   taskForm.description = ''
-  taskForm.status = '未分配'
 }
 
 const handleSizeChange = (val: number) => {
   pagination.pageSize = val
+  pagination.currentPage = 1
   loadTasks()
 }
 

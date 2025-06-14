@@ -290,7 +290,7 @@ import {
 } from '@element-plus/icons-vue'
 import { 
   getUserList, createUser, updateUser, deleteUser, 
-  bulkImportUsers, downloadUserTemplate 
+  bulkImportUsers 
 } from '@/api/user'
 import type { UserForm, UserUpdate, BulkImportResult } from '@/types/user'
 
@@ -534,16 +534,41 @@ const handleBulkImport = () => {
 const downloadTemplate = async () => {
   downloadLoading.value = true
   try {
-    const response = await downloadUserTemplate()
-    const blob = new Blob([response.data], { 
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+    // 创建CSV内容，包含标题行和示例数据
+    const csvData = [
+      ['用户名', '密码', '角色', '类型', '状态'],
+      ['zhang_san', '123456', '网络工程师', '操作员', 'active'],
+      ['li_si', '123456', '系统架构师', '管理员', 'active'],
+      ['wang_wu', '123456', '系统规划与管理师', '操作员', 'inactive'],
+      ['zhao_liu', '123456', '系统分析师', '操作员', 'active']
+    ]
+    
+    // 将数组转换为CSV格式字符串
+    const csvContent = csvData.map(row => 
+      row.map(field => `"${field.replace(/"/g, '""')}"`).join(',')
+    ).join('\n')
+    
+    // 添加BOM头，确保中文正确显示
+    const BOM = '\uFEFF'
+    const blob = new Blob([BOM + csvContent], { 
+      type: 'text/csv;charset=utf-8;' 
     })
+    
+    // 创建下载链接
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = 'user_import_template.xlsx'
+    link.download = '用户导入模板.csv'
+    link.style.display = 'none'
+    
+    // 添加到页面并触发下载
+    document.body.appendChild(link)
     link.click()
+    
+    // 清理
+    document.body.removeChild(link)
     window.URL.revokeObjectURL(url)
+    
     ElMessage.success('模板下载成功')
   } catch (error) {
     console.error('下载模板失败:', error)

@@ -8,6 +8,9 @@ import 'nprogress/nprogress.css'
 // 配置NProgress
 NProgress.configure({ showSpinner: false })
 
+// 防止重复登出的标志
+let isLoggingOut = false
+
 // 创建axios实例
 const request = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
@@ -54,10 +57,18 @@ request.interceptors.response.use(
       switch (status) {
         case 401:
           // 未授权，清除token并跳转到登录页
-          const authStore = useAuthStore()
-          authStore.logoutAction()
-          router.push('/login')
-          ElMessage.error('登录已过期，请重新登录')
+          if (!isLoggingOut) {
+            isLoggingOut = true
+            const authStore = useAuthStore()
+            // 跳过API调用以避免循环
+            authStore.logoutAction(true)
+            router.push('/login')
+            ElMessage.error('登录已过期，请重新登录')
+            // 重置标志，防止永久锁定
+            setTimeout(() => {
+              isLoggingOut = false
+            }, 1000)
+          }
           break
         case 403:
           ElMessage.error('权限不足，无法访问该资源')

@@ -494,15 +494,41 @@ const handleBulkImport = () => {
 const downloadTemplate = async () => {
   downloadLoading.value = true
   try {
-    // 模拟下载模板功能
-    const csvContent = "任务名称,任务类型,阶段,任务描述\n网络设备维护,运维监控任务,计划阶段,检查网络设备运行状态\n系统更新,运维管理任务,执行阶段,更新系统软件和补丁"
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    // 创建CSV内容，包含标题行和示例数据
+    const csvData = [
+      ['任务名称', '任务类型', '阶段', '任务描述'],
+      ['网络设备维护', '运维监控任务', '计划阶段', '检查网络设备运行状态'],
+      ['系统更新', '运维管理任务', '执行阶段', '更新系统软件和补丁'],
+      ['数据备份', '运维管理任务', '执行阶段', '定期备份重要数据'],
+      ['性能监控', '运维监控任务', '执行阶段', '监控系统性能指标']
+    ]
+    
+    // 将数组转换为CSV格式字符串
+    const csvContent = csvData.map(row => 
+      row.map(field => `"${field.replace(/"/g, '""')}"`).join(',')
+    ).join('\n')
+    
+    // 添加BOM头，确保中文正确显示
+    const BOM = '\uFEFF'
+    const blob = new Blob([BOM + csvContent], { 
+      type: 'text/csv;charset=utf-8;' 
+    })
+    
+    // 创建下载链接
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = 'task_import_template.csv'
+    link.download = '任务导入模板.csv'
+    link.style.display = 'none'
+    
+    // 添加到页面并触发下载
+    document.body.appendChild(link)
     link.click()
+    
+    // 清理
+    document.body.removeChild(link)
     window.URL.revokeObjectURL(url)
+    
     ElMessage.success('模板下载成功')
   } catch (error) {
     console.error('下载模板失败:', error)

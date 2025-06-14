@@ -18,7 +18,7 @@
               v-loading="loading"
               @current-change="handleTaskSelection"
               highlight-current-row
-              height="300"
+              height="320"
               style="width: 100%"
             >
               <el-table-column prop="id" label="任务ID" width="80" />
@@ -52,6 +52,20 @@
                 <div class="detail-item">
                   <label class="detail-label">任务阶段</label>
                   <div class="detail-value">{{ selectedTask.phase }}</div>
+                </div>
+                <div class="detail-item">
+                  <label class="detail-label">任务状态</label>
+                  <div class="detail-value">
+                    <el-tag :type="getStatusType((selectedTask as any).status || '未分配')">{{ (selectedTask as any).status || '未分配' }}</el-tag>
+                  </div>
+                </div>
+                <div class="detail-item">
+                  <label class="detail-label">创建时间</label>
+                  <div class="detail-value">{{ formatDate(selectedTask.create_time) }}</div>
+                </div>
+                <div class="detail-item">
+                  <label class="detail-label">更新时间</label>
+                  <div class="detail-value">{{ formatDate(selectedTask.update_time) }}</div>
                 </div>
                 <div class="detail-item detail-description">
                   <label class="detail-label">任务描述</label>
@@ -181,6 +195,34 @@ const selectedUsers = ref<User[]>([])
 const checkedAvailableUsers = ref<string[]>([])
 const checkedSelectedUsers = ref<string[]>([])
 
+// 工具函数
+const getStatusType = (status: string) => {
+  switch (status) {
+    case '已完成':
+      return 'success'
+    case '进行中':
+      return 'warning'
+    case '已暂停':
+      return 'danger'
+    case '未分配':
+      return 'info'
+    default:
+      return ''
+  }
+}
+
+const formatDate = (dateString: string) => {
+  if (!dateString) return '-'
+  const date = new Date(dateString)
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
 // 方法
 const loadAvailableTasks = async () => {
   loading.value = true
@@ -308,20 +350,21 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .task-assignment {
-  padding: 16px;
-  background: #f5f5f5;
-  min-height: calc(100vh - 60px);
+  padding: 0;
+  background: transparent;
+  height: 100%;
 
   .assignment-layout {
     display: flex;
-    gap: 16px;
-    height: calc(100vh - 100px);
+    gap: 12px;
+    height: 100%;
+    padding: 12px;
 
     .left-panel {
       width: 60%;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 12px;
 
       .task-card {
         flex: 1;
@@ -339,7 +382,7 @@ onMounted(() => {
       }
 
       .task-detail-card {
-        flex: 0 0 200px;
+        flex: 0 0 320px;
 
         .card-header {
           display: flex;
@@ -350,11 +393,32 @@ onMounted(() => {
         }
 
         .task-detail {
+          height: 280px;
+          overflow-y: auto;
+          
+          &::-webkit-scrollbar {
+            width: 6px;
+          }
+          
+          &::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+          }
+          
+          &::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+            
+            &:hover {
+              background: #a8a8a8;
+            }
+          }
+          
           .detail-content {
             .detail-grid {
               display: grid;
               grid-template-columns: 1fr 1fr;
-              gap: 16px;
+              gap: 12px;
 
               .detail-item {
                 &.detail-description {
@@ -363,23 +427,26 @@ onMounted(() => {
 
                 .detail-label {
                   display: block;
-                  font-size: 12px;
+                  font-size: 11px;
                   color: #909399;
                   font-weight: 500;
-                  margin-bottom: 4px;
+                  margin-bottom: 6px;
                   text-transform: uppercase;
                   letter-spacing: 0.5px;
                 }
 
                 .detail-value {
-                  font-size: 14px;
+                  font-size: 13px;
                   color: #303133;
                   line-height: 1.4;
                   word-break: break-all;
                   background: #f8f9fa;
-                  padding: 8px 12px;
+                  padding: 6px 10px;
                   border-radius: 4px;
                   border-left: 3px solid #409eff;
+                  min-height: 20px;
+                  display: flex;
+                  align-items: center;
                 }
               }
             }
@@ -391,7 +458,7 @@ onMounted(() => {
             align-items: center;
             justify-content: center;
             color: #909399;
-            padding: 40px 0;
+            padding: 30px 0;
             background: #f9f9f9;
             border-radius: 8px;
             font-size: 14px;
@@ -410,7 +477,7 @@ onMounted(() => {
       width: 40%;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 12px;
 
       .user-selection-card {
         flex: 1;
@@ -424,8 +491,8 @@ onMounted(() => {
 
         .user-selection {
           display: flex;
-          gap: 12px;
-          height: 400px;
+          gap: 10px;
+          height: 460px;
 
           .available-users-section,
           .selected-users-section {
@@ -435,42 +502,42 @@ onMounted(() => {
               display: flex;
               align-items: center;
               gap: 8px;
-              margin-bottom: 12px;
+              margin-bottom: 10px;
               font-weight: 500;
               color: #333;
-              font-size: 14px;
+              font-size: 13px;
             }
 
-                          .user-list {
-                border: 1px solid #dcdfe6;
-                border-radius: 4px;
-                height: 350px;
-                overflow-y: auto;
-                background: #fff;
-                position: relative;
+            .user-list {
+              border: 1px solid #dcdfe6;
+              border-radius: 4px;
+              height: 420px;
+              overflow-y: auto;
+              background: #fff;
+              position: relative;
 
-                &.loading {
-                  opacity: 0.6;
-                  
-                  &::after {
-                    content: "加载中...";
-                    position: absolute;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    color: #409eff;
-                    font-size: 14px;
-                  }
+              &.loading {
+                opacity: 0.6;
+                
+                &::after {
+                  content: "加载中...";
+                  position: absolute;
+                  top: 50%;
+                  left: 50%;
+                  transform: translate(-50%, -50%);
+                  color: #409eff;
+                  font-size: 14px;
                 }
+              }
 
               .user-item {
                 display: flex;
                 align-items: center;
                 gap: 8px;
-                padding: 8px 12px;
+                padding: 6px 10px;
                 cursor: pointer;
                 border-bottom: 1px solid #f0f0f0;
-                font-size: 14px;
+                font-size: 13px;
 
                 &:hover {
                   background: #f5f7fa;
@@ -493,8 +560,8 @@ onMounted(() => {
               .empty-state {
                 text-align: center;
                 color: #999;
-                padding: 60px 20px;
-                font-size: 14px;
+                padding: 40px 15px;
+                font-size: 13px;
               }
             }
           }
@@ -505,7 +572,7 @@ onMounted(() => {
             justify-content: center;
             align-items: center;
             gap: 8px;
-            width: 40px;
+            width: 36px;
           }
         }
       }
@@ -518,24 +585,25 @@ onMounted(() => {
 }
 
 :deep(.el-card) {
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 }
 
 :deep(.el-card__header) {
-  padding: 16px 20px;
+  padding: 12px 16px;
   background: #fafafa;
   border-bottom: 1px solid #ebeef5;
 }
 
 :deep(.el-card__body) {
-  padding: 16px 20px;
+  padding: 12px 16px;
 }
 
 :deep(.el-table .el-table__header th) {
   background: #f5f7fa;
   color: #606266;
   font-weight: 500;
+  padding: 8px 0;
 }
 
 :deep(.el-table--enable-row-hover .el-table__body tr:hover > td) {
@@ -544,5 +612,9 @@ onMounted(() => {
 
 :deep(.el-table__body tr.current-row > td) {
   background-color: #ecf5ff;
+}
+
+:deep(.el-table .el-table__body td) {
+  padding: 6px 0;
 }
 </style> 

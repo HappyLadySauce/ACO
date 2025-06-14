@@ -14,7 +14,6 @@ export interface User {
 export interface LoginForm {
   username: string
   password: string
-  loginType: string
 }
 
 // 用户创建表单
@@ -69,4 +68,15 @@ export const USER_ROLE_OPTIONS = [
   { label: '系统架构师', value: '系统架构师' },
   { label: '系统规划与管理师', value: '系统规划与管理师' },
   { label: '系统分析师', value: '系统分析师' }
-] as const 
+] as const
+
+// 批量导入结果
+export interface BulkImportResult {
+  success_count: number
+  fail_count: number
+  failed_users: Array<{
+    username: string
+    error: string
+  }>
+  message: string
+} 

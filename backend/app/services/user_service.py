@@ -1,8 +1,12 @@
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from app.models.user import User
-from app.schemas.user import UserCreate, UserUpdate
+from app.schemas.user import UserCreate, UserUpdate, BulkImportResult
 from app.utils.security import get_password_hash, verify_password
+import logging
+
+# 设置日志
+logger = logging.getLogger(__name__)
 
 class UserService:
     """用户服务类"""
@@ -87,4 +91,63 @@ class UserService:
             db_user.status = status
             db.commit()
             db.refresh(db_user)
-        return db_user 
+        return db_user
+    
+    @staticmethod
+    def bulk_create_users(db: Session, users: List[UserCreate]) -> BulkImportResult:
+        """批量创建用户"""
+        success_count = 0
+        fail_count = 0
+        failed_users = []
+        
+        for user_data in users:
+            try:
+                # 检查用户名是否已存在
+                existing_user = UserService.get_user_by_username(db, user_data.username)
+                if existing_user:
+                    fail_count += 1
+                    failed_users.append({
+                        "username": user_data.username,
+                        "error": "用户名已存在"
+                    })
+                    continue
+                
+                # 创建用户
+                hashed_password = get_password_hash(user_data.password)
+                db_user = User(
+                    username=user_data.username,
+                    password=hashed_password,
+                    role=user_data.role,
+                    type=user_data.type,
+                    status=user_data.status or 'inactive'
+                )
+                db.add(db_user)
+                success_count += 1
+                
+            except Exception as e:
+                logger.error(f"创建用户 {user_data.username} 失败: {str(e)}")
+                fail_count += 1
+                failed_users.append({
+                    "username": user_data.username,
+                    "error": str(e)
+                })
+        
+        try:
+            db.commit()
+        except Exception as e:
+            logger.error(f"批量创建用户事务提交失败: {str(e)}")
+            db.rollback()
+            return BulkImportResult(
+                success_count=0,
+                fail_count=len(users),
+                failed_users=[{"username": user.username, "error": "数据库操作失败"} for user in users],
+                message="批量导入失败"
+            )
+        
+        message = f"批量导入完成：成功 {success_count} 个，失败 {fail_count} 个"
+        return BulkImportResult(
+            success_count=success_count,
+            fail_count=fail_count,
+            failed_users=failed_users,
+            message=message
+        ) 

@@ -48,7 +48,6 @@
           <!-- 卡片头部 -->
           <div class="card-header">
             <h2 class="login-title">欢迎回来</h2>
-            <p class="login-subtitle">请选择您的身份并登录系统</p>
           </div>
           
           <!-- 登录表单 -->
@@ -139,7 +138,7 @@
               <!-- 用户名输入 -->
               <div class="form-section">
                 <h3 class="section-title">账户信息</h3>
-                <el-form-item prop="username">
+                <el-form-item prop="username" :show-message="false">
                   <div class="input-wrapper">
                     <el-input
                       v-model="loginForm.username"
@@ -157,7 +156,7 @@
                 </el-form-item>
                 
                 <!-- 密码输入 -->
-                <el-form-item prop="password">
+                <el-form-item prop="password" :show-message="false">
                   <div class="input-wrapper">
                     <el-input
                       v-model="loginForm.password"
@@ -186,32 +185,19 @@
                   class="login-button"
                   @click="handleLogin"
                 >
-                  <span v-if="!loading">
+                  <template v-if="!loading">
                     <el-icon><Right /></el-icon>
                     登录系统
-                  </span>
-                  <span v-else>
-                    <el-icon class="is-loading"><Loading /></el-icon>
+                  </template>
+                  <template v-else>
                     登录中...
-                  </span>
+                  </template>
                 </el-button>
               </el-form-item>
             </el-form>
           </div>
           
-          <!-- 演示信息 -->
-          <div class="card-footer">
-            <div class="demo-banner">
-              <el-icon><InfoFilled /></el-icon>
-              <div class="demo-text">
-                <h4>演示账户</h4>
-                <div class="demo-accounts">
-                  <span class="account-tag">admin / 123456</span>
-                  <span class="account-tag">operator / 123456</span>
-                </div>
-              </div>
-            </div>
-          </div>
+
         </div>
       </div>
     </div>
@@ -223,7 +209,7 @@ import { ref, reactive, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { 
-  Monitor, User, UserFilled, Lock, Right, Check, InfoFilled, Loading,
+  Monitor, User, UserFilled, Lock, Right, Check, InfoFilled,
   Setting, DataAnalysis, Connection 
 } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/store/modules/auth'
@@ -257,7 +243,7 @@ const roles = [
     value: '操作员',
     title: '系统操作员',
     subtitle: '日常运维',
-    description: '负责日常运维操作，执行监控和维护任务',
+    description: '负责日常运维操作，获取任务，执行监控和维护任务',
     icon: User,
     permissions: ['设备监控', '任务执行', '数据查看', '报告生成']
   }
@@ -490,9 +476,10 @@ const handleLogin = async () => {
   position: relative;
   z-index: 10;
   display: grid;
-  grid-template-columns: 1fr 480px;
+  grid-template-columns: 1fr 450px;
   width: 100%;
   height: 100vh;
+  min-height: 700px;
 }
 
 // 左侧欢迎区域
@@ -602,9 +589,9 @@ const handleLogin = async () => {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(40px);
   border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 24px;
+  border-radius: 20px;
   box-shadow: 
-    0 32px 64px rgba(0, 0, 0, 0.1),
+    0 24px 48px rgba(0, 0, 0, 0.1),
     0 0 0 1px rgba(255, 255, 255, 0.05);
   overflow: hidden;
   animation: cardSlideIn 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -622,51 +609,44 @@ const handleLogin = async () => {
 }
 
 .card-header {
-  padding: 40px 32px 32px;
+  padding: 28px 28px 24px;
   text-align: center;
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   
   .login-title {
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 700;
     color: #1a202c;
-    margin: 0 0 8px 0;
+    margin: 0;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
-  
-  .login-subtitle {
-    font-size: 15px;
-    color: #64748b;
-    margin: 0;
-    font-weight: 400;
-  }
 }
 
 .card-body {
-  padding: 32px;
+  padding: 24px 28px 20px;
 }
 
 // 表单样式
 .login-form {
   .form-section {
-    margin-bottom: 32px;
+    margin-bottom: 20px;
     
     .section-title {
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 600;
       color: #374151;
-      margin: 0 0 20px 0;
+      margin: 0 0 14px 0;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       
       &::before {
         content: '';
-        width: 4px;
-        height: 16px;
+        width: 3px;
+        height: 14px;
         background: linear-gradient(135deg, #667eea, #764ba2);
         border-radius: 2px;
       }
@@ -680,11 +660,11 @@ const handleLogin = async () => {
     // 背景滑块
     .selector-background {
       position: relative;
-      height: 60px;
+      height: 56px;
       background: rgba(248, 250, 252, 0.8);
-      border-radius: 16px;
+      border-radius: 14px;
       border: 2px solid #e5e7eb;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
       overflow: hidden;
       
       .active-indicator {
@@ -723,7 +703,7 @@ const handleLogin = async () => {
       top: 0;
       left: 0;
       width: 100%;
-      height: 60px;
+      height: 56px;
       display: flex;
       z-index: 2;
       
@@ -734,12 +714,14 @@ const handleLogin = async () => {
         justify-content: center;
         cursor: pointer;
         transition: all 0.3s ease;
+        min-width: 0;
+        position: relative;
         
         &.active {
           .tab-content {
             .tab-icon {
               .icon-wrapper {
-                color: white;
+                color: white !important;
                 transform: scale(1.1);
               }
               
@@ -751,12 +733,46 @@ const handleLogin = async () => {
             
             .tab-text {
               h4 {
-                color: white;
-                font-weight: 700;
+                color: white !important;
+                font-weight: 700 !important;
+                font-size: 13px !important;
+                line-height: 1.3 !important;
               }
               
               p {
-                color: rgba(255, 255, 255, 0.9);
+                color: rgba(255, 255, 255, 0.9) !important;
+                font-size: 11px !important;
+                line-height: 1.3 !important;
+              }
+            }
+          }
+        }
+        
+        // 确保两个角色卡片样式完全一致
+        &:first-child.active,
+        &:last-child.active {
+          .tab-content {
+            .tab-icon {
+              .icon-wrapper {
+                color: white !important;
+                transform: scale(1.1);
+              }
+            }
+            
+            .tab-text {
+              h4 {
+                color: white !important;
+                font-weight: 700 !important;
+                font-size: 13px !important;
+                line-height: 1.3 !important;
+                margin: 0 !important;
+              }
+              
+              p {
+                color: rgba(255, 255, 255, 0.9) !important;
+                font-size: 11px !important;
+                line-height: 1.3 !important;
+                margin: 0 !important;
               }
             }
           }
@@ -765,18 +781,30 @@ const handleLogin = async () => {
         .tab-content {
           display: flex;
           align-items: center;
-          gap: 10px;
-          padding: 8px 12px;
+          gap: 8px;
+          padding: 12px 14px;
+          width: 100%;
+          height: 100%;
+          box-sizing: border-box;
           
           .tab-icon {
             position: relative;
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
             
             .icon-wrapper {
               display: flex;
               align-items: center;
               justify-content: center;
-              color: #667eea;
+              color: #667eea !important;
               transition: all 0.3s ease;
+              width: 100%;
+              height: 100%;
+              
+              .el-icon {
+                font-size: 24px !important;
+              }
             }
             
             .icon-glow {
@@ -794,18 +822,23 @@ const handleLogin = async () => {
           }
           
           .tab-text {
+            flex: 1;
+            min-width: 0;
+            
             h4 {
-              font-size: 14px;
-              font-weight: 600;
-              color: #6b7280;
-              margin: 0;
+              font-size: 13px !important;
+              font-weight: 600 !important;
+              color: #6b7280 !important;
+              margin: 0 !important;
+              line-height: 1.3 !important;
               transition: all 0.3s ease;
             }
             
             p {
-              font-size: 12px;
-              color: #9ca3af;
-              margin: 0;
+              font-size: 11px !important;
+              color: #9ca3af !important;
+              margin: 0 !important;
+              line-height: 1.3 !important;
               transition: all 0.3s ease;
             }
           }
@@ -815,13 +848,13 @@ const handleLogin = async () => {
     
     // 角色详情卡片
     .role-details {
-      margin-top: 20px;
+      margin-top: 14px;
       
       .role-detail-card {
-        padding: 24px;
+        padding: 16px;
         background: linear-gradient(135deg, rgba(102, 126, 234, 0.02), rgba(118, 75, 162, 0.02));
         border: 1px solid rgba(102, 126, 234, 0.1);
-        border-radius: 16px;
+        border-radius: 12px;
         position: relative;
         overflow: hidden;
         
@@ -838,23 +871,23 @@ const handleLogin = async () => {
         .detail-header {
           display: flex;
           align-items: center;
-          gap: 12px;
-          margin-bottom: 16px;
+          gap: 10px;
+          margin-bottom: 10px;
           
           .detail-icon {
-            width: 36px;
-            height: 36px;
+            width: 32px;
+            height: 32px;
             display: flex;
             align-items: center;
             justify-content: center;
             background: linear-gradient(135deg, #667eea, #764ba2);
-            border-radius: 10px;
+            border-radius: 8px;
             color: white;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 3px 8px rgba(102, 126, 234, 0.3);
           }
           
           h5 {
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 600;
             color: #374151;
             margin: 0;
@@ -862,26 +895,28 @@ const handleLogin = async () => {
         }
         
         .detail-description {
-          font-size: 14px;
+          font-size: 13px;
           color: #6b7280;
           line-height: 1.5;
-          margin: 0 0 20px 0;
+          margin: 0 0 14px 0;
+          word-wrap: break-word;
+          overflow-wrap: break-word;
         }
         
         .permissions-list {
           display: grid;
           grid-template-columns: repeat(2, 1fr);
-          gap: 12px;
+          gap: 8px;
           
           .permission-item {
             display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 8px 12px;
+            gap: 6px;
+            padding: 6px 10px;
             background: rgba(16, 185, 129, 0.05);
             border: 1px solid rgba(16, 185, 129, 0.1);
-            border-radius: 8px;
-            font-size: 13px;
+            border-radius: 6px;
+            font-size: 12px;
             color: #374151;
             transition: all 0.3s ease;
             
@@ -929,16 +964,21 @@ const handleLogin = async () => {
   // 输入框样式
   .input-wrapper {
     position: relative;
+    margin-bottom: 16px;
+    width: 100%;
     
     .custom-input {
+      width: 100%;
+      
       :deep(.el-input__wrapper) {
-        border-radius: 14px;
+        width: 100%;
+        border-radius: 12px;
         border: 2px solid #e5e7eb;
         box-shadow: none;
         background: rgba(248, 250, 252, 0.8);
         backdrop-filter: blur(10px);
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        padding: 4px 16px;
+        padding: 2px 14px;
         
         &:hover {
           border-color: #c7d2fe;
@@ -948,14 +988,15 @@ const handleLogin = async () => {
         &.is-focus {
           border-color: #667eea;
           background: white;
-          box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-          transform: translateY(-2px);
+          box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+          transform: translateY(-1px);
         }
       }
       
       :deep(.el-input__inner) {
-        height: 50px;
-        font-size: 15px;
+        width: 100%;
+        height: 42px;
+        font-size: 14px;
         color: #374151;
         font-weight: 500;
         
@@ -966,23 +1007,33 @@ const handleLogin = async () => {
       
       .input-icon {
         color: #667eea;
-        font-size: 18px;
+        font-size: 16px;
       }
+    }
+  }
+  
+  // 确保表单项宽度一致
+  .el-form-item {
+    width: 100%;
+    margin-bottom: 0;
+    
+    :deep(.el-form-item__content) {
+      width: 100%;
     }
   }
   
   // 登录按钮
   .login-button-section {
-    margin-top: 40px;
+    margin-top: 20px;
     margin-bottom: 0;
   }
   
   .login-button {
     width: 100%;
-    height: 56px;
-    font-size: 16px;
+    height: 44px;
+    font-size: 15px;
     font-weight: 600;
-    border-radius: 14px;
+    border-radius: 12px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border: none;
     box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
@@ -1016,65 +1067,6 @@ const handleLogin = async () => {
     
     .el-icon {
       margin-right: 8px;
-      
-      &.is-loading {
-        animation: spin 1s linear infinite;
-      }
-    }
-  }
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-// 卡片底部
-.card-footer {
-  padding: 24px 32px 32px;
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
-  
-  .demo-banner {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 20px;
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(147, 51, 234, 0.05));
-    border: 1px solid rgba(59, 130, 246, 0.1);
-    border-radius: 12px;
-    
-    .el-icon {
-      color: #3b82f6;
-      font-size: 20px;
-      margin-top: 2px;
-    }
-    
-    .demo-text {
-      flex: 1;
-      
-      h4 {
-        font-size: 14px;
-        font-weight: 600;
-        color: #374151;
-        margin: 0 0 8px 0;
-      }
-      
-      .demo-accounts {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-        
-        .account-tag {
-          display: inline-block;
-          padding: 4px 8px;
-          background: rgba(59, 130, 246, 0.1);
-          color: #3b82f6;
-          font-size: 12px;
-          font-weight: 500;
-          border-radius: 6px;
-          font-family: 'Monaco', 'Menlo', monospace;
-        }
-      }
     }
   }
 }
@@ -1082,21 +1074,48 @@ const handleLogin = async () => {
 // 响应式设计
 @media (max-width: 1200px) {
   .main-content {
-    grid-template-columns: 1fr 420px;
+    grid-template-columns: 1fr 380px;
   }
   
   .welcome-section {
-    padding: 40px;
+    padding: 30px;
     
     .welcome-content .brand-section .brand-title {
-      font-size: 36px;
+      font-size: 32px;
     }
+  }
+  
+  .login-card {
+    max-width: 360px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .main-content {
+    grid-template-columns: 1fr 350px;
+  }
+  
+  .login-card {
+    max-width: 340px;
+  }
+  
+  .card-header {
+    padding: 24px 20px 20px;
+  }
+  
+  .card-body {
+    padding: 20px;
+  }
+  
+  .card-footer {
+    padding: 16px 20px 20px;
   }
 }
 
 @media (max-width: 768px) {
   .main-content {
     grid-template-columns: 1fr;
+    min-height: 100vh;
   }
   
   .welcome-section {
@@ -1104,57 +1123,114 @@ const handleLogin = async () => {
   }
   
   .login-section {
-    padding: 20px;
+    padding: 16px;
     background: none;
     border-left: none;
   }
   
   .login-card {
-    border-radius: 20px;
+    max-width: 100%;
+    max-height: none;
+    border-radius: 16px;
   }
   
-  .card-header, .card-body, .card-footer {
-    padding-left: 24px;
-    padding-right: 24px;
+  .card-header {
+    padding: 20px 20px 16px;
   }
   
-  .role-selector .role-option {
-    padding: 16px;
-    
-    .role-icon {
-      width: 48px;
-      height: 48px;
-    }
+  .card-body {
+    padding: 16px 20px;
+  }
+  
+  .card-footer {
+    padding: 16px 20px 20px;
+  }
+  
+  .form-section {
+    margin-bottom: 20px;
+  }
+  
+  .selector-background {
+    height: 48px;
+  }
+  
+  .role-tabs {
+    height: 48px;
   }
 }
 
 @media (max-width: 480px) {
   .login-section {
-    padding: 16px;
+    padding: 12px;
+  }
+  
+  .login-card {
+    border-radius: 12px;
   }
   
   .card-header {
-    padding: 32px 20px 24px;
+    padding: 16px 16px 12px;
     
     .login-title {
-      font-size: 24px;
+      font-size: 20px;
+    }
+    
+    .login-subtitle {
+      font-size: 13px;
     }
   }
   
   .card-body {
-    padding: 24px 20px;
+    padding: 12px 16px;
   }
   
   .card-footer {
-    padding: 20px 20px 24px;
+    padding: 12px 16px 16px;
+  }
+  
+  .form-section {
+    margin-bottom: 16px;
+    
+    .section-title {
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+  }
+  
+  .selector-background {
+    height: 44px;
+  }
+  
+  .role-tabs {
+    height: 44px;
+  }
+  
+  .role-detail-card {
+    padding: 14px;
+  }
+  
+  .login-button {
+    height: 44px;
+    font-size: 15px;
   }
   
   .demo-banner {
     flex-direction: column;
     text-align: center;
+    padding: 12px;
+    
+    .demo-text h4 {
+      font-size: 12px;
+    }
     
     .demo-accounts {
       justify-content: center;
+      gap: 4px;
+      
+      .account-tag {
+        font-size: 10px;
+        padding: 2px 4px;
+      }
     }
   }
 }

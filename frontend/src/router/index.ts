@@ -62,6 +62,25 @@ const routes = [
         }
       },
       {
+        path: '/task-assignment',
+        name: 'TaskAssignment',
+        component: () => import('@/views/TaskAssignment.vue'),
+        meta: { 
+          requiresAuth: true,
+          requiresAdmin: true,
+          title: '任务下发'
+        }
+      },
+      {
+        path: '/task-progress',
+        name: 'TaskProgress',
+        component: () => import('@/views/TaskProgress.vue'),
+        meta: { 
+          requiresAuth: true,
+          title: '任务进度'
+        }
+      },
+      {
         path: '/devices',
         name: 'DeviceManagement',
         component: () => import('@/views/DeviceManagement.vue'),

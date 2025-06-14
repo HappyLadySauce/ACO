@@ -1,550 +1,1567 @@
 <template>
   <div class="dashboard">
-    <!-- 页面标题 -->
-    <div class="page-header">
-      <h1 class="page-title">系统仪表板</h1>
-      <p class="page-subtitle">实时监控系统运行状态</p>
-    </div>
-
     <!-- 统计卡片网格 -->
     <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-icon user-icon">
-          <el-icon><User /></el-icon>
+      <!-- 当前在线设备 -->
+      <div class="stat-card stat-card-1">
+        <div class="stat-icon">
+          <img src="@/assets/icon/组 3589.png" alt="在线设备" />
         </div>
         <div class="stat-info">
-          <div class="stat-number">{{ stats.totalUsers }}</div>
-          <div class="stat-label">总用户数</div>
-        </div>
-        <div class="stat-trend">
-          <span class="trend-up">+12%</span>
+          <div class="stat-number">3台</div>
+          <div class="stat-label">当前在线设备</div>
         </div>
       </div>
 
-      <div class="stat-card">
-        <div class="stat-icon task-icon">
-          <el-icon><Tickets /></el-icon>
+      <!-- 活跃用户数 -->
+      <div class="stat-card stat-card-2">
+        <div class="stat-icon">
+          <img src="@/assets/icon/组 3590.png" alt="活跃用户" />
         </div>
         <div class="stat-info">
-          <div class="stat-number">{{ stats.totalTasks }}</div>
-          <div class="stat-label">总任务数</div>
-        </div>
-        <div class="stat-trend">
-          <span class="trend-up">+8%</span>
+          <div class="stat-number">20人</div>
+          <div class="stat-label">活跃用户数</div>
         </div>
       </div>
 
-      <div class="stat-card">
-        <div class="stat-icon device-icon">
-          <el-icon><Monitor /></el-icon>
+      <!-- 处理任务数 -->
+      <div class="stat-card stat-card-3">
+        <div class="stat-icon">
+          <img src="@/assets/icon/组 3591.png" alt="处理任务" />
         </div>
         <div class="stat-info">
-          <div class="stat-number">{{ stats.totalDevices }}</div>
-          <div class="stat-label">总设备数</div>
-        </div>
-        <div class="stat-trend">
-          <span class="trend-down">-2%</span>
+          <div class="stat-number">{{ taskStats.processingTasks }}个</div>
+          <div class="stat-label">处理任务数</div>
         </div>
       </div>
 
-      <div class="stat-card">
-        <div class="stat-icon online-icon">
-          <el-icon><Connection /></el-icon>
+      <!-- 系统运行状态 -->
+      <div class="stat-card stat-card-4">
+        <div class="stat-icon">
+          <img src="@/assets/icon/组 3592.png" alt="运行状态" />
         </div>
         <div class="stat-info">
-          <div class="stat-number">{{ stats.onlineDevices }}</div>
-          <div class="stat-label">在线设备</div>
+          <div class="stat-number">运行中</div>
+          <div class="stat-label">系统运行状态</div>
         </div>
-        <div class="stat-trend">
-          <span class="trend-up">+5%</span>
+      </div>
+
+      <!-- 备份磁盘占用 -->
+      <div class="stat-card stat-card-5">
+        <div class="stat-icon">
+          <img src="@/assets/icon/组 3593.png" alt="磁盘占用" />
+        </div>
+        <div class="stat-info">
+          <div class="stat-number">694MB</div>
+          <div class="stat-label">备份磁盘占用</div>
+        </div>
+      </div>
+
+      <!-- 告警数量 -->
+      <div class="stat-card stat-card-6">
+        <div class="stat-icon">
+          <img src="@/assets/icon/组 3594.png" alt="告警数量" />
+        </div>
+        <div class="stat-info">
+          <div class="stat-number">5条</div>
+          <div class="stat-label">告警数量</div>
         </div>
       </div>
     </div>
 
-    <!-- 主要内容网格 -->
-    <div class="content-grid">
-      <!-- 最近任务 -->
-      <div class="content-card tasks-card">
-        <div class="card-header">
-          <h3 class="card-title">最近任务</h3>
-          <el-button type="primary" size="small" @click="$router.push('/tasks')">
-            查看全部
-          </el-button>
+    <!-- 图表区域 -->
+    <div class="charts-section">
+      <!-- 系统综合对比图 -->
+      <div class="chart-card system-chart">
+        <div class="chart-header">
+          <h3 class="chart-title">
+            <img src="@/assets/icon/组 3000.png" alt="系统监控" class="chart-icon-img" />
+            系统资源实时监控
+          </h3>
         </div>
-        <div class="card-content">
-          <div class="task-list">
-            <div v-for="task in recentTasks" :key="task.id" class="task-item">
-              <div class="task-info">
-                <div class="task-name">{{ task.name }}</div>
-                <div class="task-time">{{ task.create_time }}</div>
-              </div>
-              <el-tag :type="getTaskStatusType(task.status)" size="small">
-                {{ task.status }}
-              </el-tag>
+        <div class="chart-content">
+          <div class="chart-legend">
+            <div class="legend-items">
+              <span class="legend-item">
+                <span class="legend-dot cpu"></span>
+                CPU 使用率
+              </span>
+              <span class="legend-item">
+                <span class="legend-dot memory"></span>
+                内存使用率
+              </span>
+              <span class="legend-item">
+                <span class="legend-dot disk"></span>
+                磁盘使用率
+              </span>
             </div>
+            <span class="legend-realtime-value">
+              <span class="realtime-time">{{ realtimeInfo.time }}</span>
+              <span class="realtime-value">{{ realtimeInfo.value }}%</span>
+            </span>
           </div>
+          <div ref="systemChart" class="chart-container"></div>
         </div>
       </div>
 
-      <!-- 设备状态 -->
-      <div class="content-card devices-card">
-        <div class="card-header">
-          <h3 class="card-title">设备状态</h3>
-          <el-button type="primary" size="small" @click="$router.push('/devices')">
-            查看全部
-          </el-button>
-        </div>
-        <div class="card-content">
-          <div class="device-list">
-            <div v-for="device in deviceStatus" :key="device.id" class="device-item">
-              <div class="device-info">
-                <div class="device-name">{{ device.name }}</div>
-                <div class="device-time">{{ device.last_active }}</div>
+      <!-- 告警信息和设备告警区域 -->
+      <div class="alert-section">
+        <!-- 告警信息 -->
+        <div class="alert-card">
+          <div class="alert-header">
+            <h3 class="alert-title">
+              <img src="@/assets/icon/组 3000.png" alt="告警信息" class="alert-icon-img" />
+              告警信息
+            </h3>
+          </div>
+          <div class="alert-content">
+            <div class="alert-charts">
+              <!-- 告警状态统计 -->
+              <div class="alert-chart-item">
+                <div class="chart-selector">
+                  <select v-model="alertStatusType" @change="updateAlertStatusChart">
+                    <option value="status">告警状态</option>
+                    <option value="level">告警等级</option>
+                    <option value="type">告警类型</option>
+                  </select>
+                </div>
+                <div ref="alertStatusChart" class="alert-pie-chart"></div>
+                <div class="alert-chart-label">告警状态统计</div>
               </div>
-              <div class="device-status">
-                <div class="status-dot" :class="device.status"></div>
-                <span class="status-text">{{ device.status === 'online' ? '在线' : '离线' }}</span>
+              <!-- 告警级别统计 -->
+              <div class="alert-chart-item">
+                <div class="chart-selector">
+                  <select v-model="alertLevelType" @change="updateAlertLevelChart">
+                    <option value="level">告警级别</option>
+                    <option value="region">区域分布</option>
+                    <option value="time">时段分布</option>
+                  </select>
+                </div>
+                <div ref="alertLevelChart" class="alert-pie-chart"></div>
+                <div class="alert-chart-label">告警级别统计</div>
+              </div>
+            </div>
+            <!-- 图例 -->
+            <div class="alert-legends">
+              <div class="legend-row">
+                <div class="legend-item">
+                  <span class="legend-dot" style="background: #ff7875;"></span>
+                  CPU告警
+                </div>
+                <div class="legend-percentage">42%</div>
+              </div>
+              <div class="legend-row">
+                <div class="legend-item">
+                  <span class="legend-dot" style="background: #ffa940;"></span>
+                  内存告警
+                </div>
+                <div class="legend-percentage">42%</div>
+              </div>
+              <div class="legend-row">
+                <div class="legend-item">
+                  <span class="legend-dot" style="background: #52c41a;"></span>
+                  磁盘告警
+                </div>
+                <div class="legend-percentage">42%</div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- 系统性能图表 -->
-      <div class="content-card performance-card">
-        <div class="card-header">
-          <h3 class="card-title">系统性能</h3>
-        </div>
-        <div class="card-content">
-          <div class="performance-metrics">
-            <div class="metric">
-              <div class="metric-label">CPU使用率</div>
-              <div class="metric-value">68%</div>
-              <div class="metric-bar">
-                <div class="metric-progress" style="width: 68%"></div>
-              </div>
-            </div>
-            <div class="metric">
-              <div class="metric-label">内存使用率</div>
-              <div class="metric-value">45%</div>
-              <div class="metric-bar">
-                <div class="metric-progress" style="width: 45%"></div>
-              </div>
-            </div>
-            <div class="metric">
-              <div class="metric-label">磁盘使用率</div>
-              <div class="metric-value">72%</div>
-              <div class="metric-bar">
-                <div class="metric-progress" style="width: 72%"></div>
-              </div>
-            </div>
+        <!-- 设备告警 -->
+        <div class="device-alert-card">
+          <div class="device-alert-header">
+            <h3 class="device-alert-title">
+              <img src="@/assets/icon/组 3000.png" alt="设备告警" class="device-alert-icon-img" />
+              设备告警
+            </h3>
           </div>
-        </div>
-      </div>
-
-      <!-- 活动日志 -->
-      <div class="content-card activity-card">
-        <div class="card-header">
-          <h3 class="card-title">活动日志</h3>
-        </div>
-        <div class="card-content">
-          <div class="activity-list">
-            <div class="activity-item">
-              <div class="activity-time">10:30</div>
-              <div class="activity-content">用户admin登录系统</div>
-            </div>
-            <div class="activity-item">
-              <div class="activity-time">09:45</div>
-              <div class="activity-content">系统维护任务已完成</div>
-            </div>
-            <div class="activity-item">
-              <div class="activity-time">09:20</div>
-              <div class="activity-content">新设备已添加到系统</div>
-            </div>
-            <div class="activity-item">
-              <div class="activity-time">08:55</div>
-              <div class="activity-content">数据备份任务开始执行</div>
+          <div class="device-alert-content">
+            <div class="device-alert-list">
+              <div v-for="(alert, index) in systemAlertData" :key="index" class="device-alert-item">
+                <div class="alert-type-header">
+                  <span class="alert-type-badge">{{ alert.type }}</span>
+                  <span class="alert-category-badge">{{ alert.category }}</span>
+                  <span class="alert-phase-badge" :class="getAlertLevelClass(alert.phase)">{{ alert.phase }}</span>
+                </div>
+                <div class="alert-details">
+                  <div class="alert-detail-line">{{ alert.detail1 }}</div>
+                  <div class="alert-detail-line">{{ alert.detail2 }}</div>
+                  <div class="alert-detail-line">{{ alert.detail3 }}</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- 设备信息表格 -->
+    <div class="device-table-section">
+      <div class="table-card">
+        <div class="table-header">
+          <h3 class="table-title">
+            <img src="@/assets/icon/设备.png" alt="任务信息" class="table-icon-img" />
+            任务信息
+          </h3>
+          <div class="table-actions">
+            <button class="action-btn create-btn" @click="handleCreateTask">
+              <img src="@/assets/icon/添加.png" alt="创建任务" class="btn-icon-img" />
+              创建任务
+            </button>
+            <button class="action-btn download-btn" @click="handleAssignTask">
+              <img src="@/assets/icon/任务.png" alt="任务下发" class="btn-icon-img" />
+              任务下发
+            </button>
+            <button class="action-btn progress-btn" @click="handleManageProgress">
+              <img src="@/assets/icon/系统参数.png" alt="进度管理" class="btn-icon-img" />
+              进度管理
+            </button>
+            <button class="action-btn import-btn" @click="handleRefreshData">
+              <img src="@/assets/icon/upload.png" alt="刷新数据" class="btn-icon-img" />
+              刷新数据
+            </button>
+          </div>
+        </div>
+        <div class="table-content">
+          <div v-if="taskLoading" class="loading-container">
+            <div class="loading-text">加载中...</div>
+          </div>
+          <table v-else class="device-table">
+            <thead>
+              <tr>
+                <th>任务ID</th>
+                <th>任务名称</th>
+                <th>任务类型</th>
+                <th>任务阶段</th>
+                <th>任务描述</th>
+                <th>执行角色</th>
+                <th>状态</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="task in taskList" :key="task.id">
+                <td>{{ task.id }}</td>
+                <td>{{ task.name }}</td>
+                <td>{{ task.type || '-' }}</td>
+                <td>{{ task.phase || '-' }}</td>
+                <td>{{ task.description || '-' }}</td>
+                <td>-</td>
+                <td>
+                  <span :class="['status-tag', getStatusClass(task.status)]">
+                    {{ task.status }}
+                  </span>
+                </td>
+              </tr>
+              <tr v-if="taskList.length === 0">
+                <td colspan="7" style="text-align: center; color: #999; padding: 40px;">
+                  暂无任务数据
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 任务管理组件 -->
+    <TaskManagement ref="taskManagementRef" @refresh="loadTaskData" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { User, Tickets, Monitor, Connection } from '@element-plus/icons-vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import * as echarts from 'echarts'
+import { getTasks, getTasksCount, type Task } from '@/api/task'
+import { ElMessage } from 'element-plus'
+import TaskManagement from '@/components/TaskManagement.vue'
 
-interface Stats {
-  totalUsers: number
-  totalTasks: number
-  totalDevices: number
-  onlineDevices: number
-}
-
-interface Task {
+interface DeviceInfo {
   id: number
-  name: string
+  type1: string
+  type2: string
+  phase: string
+  description: string
+  role: string
   status: string
-  create_time: string
 }
 
-interface Device {
-  id: number
-  name: string
-  status: string
-  last_active: string
-}
 
-const stats = ref<Stats>({
-  totalUsers: 156,
-  totalTasks: 28,
-  totalDevices: 42,
-  onlineDevices: 38
+
+const systemChart = ref<HTMLElement>()
+const deviceChart = ref<HTMLElement>()
+const alertStatusChart = ref<HTMLElement>()
+const alertLevelChart = ref<HTMLElement>()
+const taskManagementRef = ref<InstanceType<typeof TaskManagement>>()
+
+// 实时数据
+const realtimeData = ref({
+  cpu: [18, 20, 22, 19, 21, 20, 23, 18, 19, 21, 20],
+  memory: [38, 40, 42, 39, 41, 40, 43, 38, 39, 41, 40],
+  disk: [62, 64, 66, 63, 65, 64, 67, 62, 63, 65, 64]
 })
 
-const recentTasks = ref<Task[]>([
-  { id: 1, name: '系统维护任务', status: '进行中', create_time: '2024-01-15 10:30' },
-  { id: 2, name: '数据备份任务', status: '已完成', create_time: '2024-01-14 14:20' },
-  { id: 3, name: '安全检查任务', status: '未开始', create_time: '2024-01-13 09:15' },
-  { id: 4, name: '性能优化任务', status: '进行中', create_time: '2024-01-12 16:45' }
+// 实时信息显示
+const realtimeInfo = ref({
+  time: '18:35:12',
+  value: 64
+})
+
+let chartInstance: any = null
+let animationTimer: any = null
+
+// 告警图表选择器状态
+const alertStatusType = ref('status')
+const alertLevelType = ref('level')
+
+// 生成时间标签
+const generateTimeLabels = () => {
+  const labels = []
+  const now = new Date()
+  
+  for (let i = 10; i >= 0; i--) {
+    const time = new Date(now.getTime() - i * 10000) // 每10秒一个点
+    const timeStr = time.toTimeString().slice(0, 8)
+    labels.push(timeStr)
+  }
+  
+  return labels
+}
+
+// 任务列表数据 - 使用后端API
+const taskList = ref<Task[]>([])
+const taskStats = ref({
+  totalTasks: 0,
+  processingTasks: 0
+})
+const taskLoading = ref(false)
+
+// 系统告警数据
+const systemAlertData = ref([
+  {
+    type: '服务器告警',
+    category: '资源告警',
+    phase: '严重告警',
+    detail1: '服务器节点1 - CPU使用率过高 (85%)',
+    detail2: '内存使用率: 78% | 可用空间不足',
+    detail3: '建议立即检查进程占用情况'
+  },
+  {
+    type: '存储告警',
+    category: '磁盘告警',
+    phase: '警告',
+    detail1: '服务器节点2 - 磁盘空间不足 (92%)',
+    detail2: '系统盘 /dev/sda1 剩余空间: 2.1GB',
+    detail3: '建议清理日志文件或扩容'
+  }
 ])
 
-const deviceStatus = ref<Device[]>([
-  { id: 1, name: '服务器-01', status: 'online', last_active: '2024-01-15 12:30' },
-  { id: 2, name: '服务器-02', status: 'offline', last_active: '2024-01-14 18:45' },
-  { id: 3, name: '工作站-01', status: 'online', last_active: '2024-01-15 11:20' },
-  { id: 4, name: '工作站-02', status: 'online', last_active: '2024-01-15 10:15' }
-])
 
-const getTaskStatusType = (status: string) => {
-  switch (status) {
-    case '已完成':
-      return 'success'
-    case '进行中':
-      return 'warning'
-    case '未开始':
-      return 'info'
-    default:
-      return 'danger'
+
+// 加载任务数据
+const loadTaskData = async () => {
+  if (taskLoading.value) return
+  
+  taskLoading.value = true
+  try {
+    // 获取任务列表
+    const tasksResponse = await getTasks({ limit: 10 })
+    taskList.value = tasksResponse.data
+    
+    // 获取任务统计
+    const totalResponse = await getTasksCount()
+    const processingResponse = await getTasksCount({ status: '进行中' })
+    
+    taskStats.value = {
+      totalTasks: totalResponse.data.count,
+      processingTasks: processingResponse.data.count
+    }
+    
+  } catch (error) {
+    console.error('加载任务数据失败:', error)
+    // 如果是网络错误或者无法连接后端，使用默认数据
+    if (taskList.value.length === 0) {
+      taskList.value = [
+        {
+          id: 1,
+          name: '系统监控任务',
+          type: '监控检测',
+          phase: '监控阶段',
+          description: '对系统进行实时监控和状态检查',
+          status: '进行中',
+          create_time: new Date().toISOString(),
+          update_time: new Date().toISOString()
+        },
+        {
+          id: 2,
+          name: '数据备份任务',
+          type: '数据管理',
+          phase: '备份阶段',
+          description: '定期备份重要数据',
+          status: '未分配',
+          create_time: new Date().toISOString(),
+          update_time: new Date().toISOString()
+        }
+      ]
+      taskStats.value = {
+        totalTasks: 2,
+        processingTasks: 1
+      }
+      ElMessage.warning('使用演示数据，请确保后端服务正常运行')
+    }
+  } finally {
+    taskLoading.value = false
   }
 }
 
-onMounted(() => {
-  console.log('Dashboard 组件已挂载')
+// 任务操作处理函数
+const handleCreateTask = () => {
+  taskManagementRef.value?.showCreateTask()
+}
+
+const handleAssignTask = () => {
+  taskManagementRef.value?.showAssignTask()
+}
+
+const handleManageProgress = () => {
+  taskManagementRef.value?.showProgressManagement()
+}
+
+const handleRefreshData = () => {
+  loadTaskData()
+  ElMessage.success('数据刷新成功')
+}
+
+
+
+const getStatusClass = (status: string) => {
+  const statusMap: { [key: string]: string } = {
+    '未分配': 'status-unassigned',
+    '已分配': 'status-assigned',
+    '进行中': 'status-processing',
+    '已完成': 'status-completed'
+  }
+  return statusMap[status] || 'status-default'
+}
+
+// 根据告警级别返回对应的CSS类
+const getAlertLevelClass = (level: string) => {
+  const levelMap: { [key: string]: string } = {
+    '严重告警': 'alert-critical',
+    '警告': 'alert-warning',
+    '一般告警': 'alert-normal'
+  }
+  return levelMap[level] || 'alert-normal'
+}
+
+const initSystemChart = () => {
+  if (!systemChart.value) return
+  
+  chartInstance = echarts.init(systemChart.value)
+  
+  // 生成时间标签
+  const timeLabels = generateTimeLabels()
+  
+  const option = {
+    grid: {
+      top: 40,
+      left: 60,
+      right: 40,
+      bottom: 40
+    },
+    xAxis: {
+      type: 'category',
+      data: timeLabels,
+      axisLine: {
+        lineStyle: { color: '#E5E7EB' }
+      },
+      axisTick: { show: false },
+      axisLabel: {
+        color: '#6B7280',
+        fontSize: 11,
+        interval: 2
+      }
+    },
+    yAxis: {
+      type: 'value',
+      min: 0,
+      max: 100,
+      interval: 20,
+      axisLine: { show: false },
+      axisTick: { show: false },
+      splitLine: {
+        lineStyle: { color: '#F3F4F6', type: 'dashed' }
+      },
+      axisLabel: {
+        color: '#6B7280',
+        fontSize: 11,
+        formatter: '{value}%'
+      }
+    },
+        series: [
+      {
+        name: 'CPU使用率',
+        type: 'line',
+        smooth: true,
+        lineStyle: { 
+          color: '#10B981', 
+          width: 3 
+        },
+        itemStyle: { 
+          color: '#10B981',
+          borderColor: '#10B981',
+          borderWidth: 2
+        },
+        areaStyle: {
+          color: {
+            type: 'linear',
+            x: 0, y: 0, x2: 0, y2: 1,
+            colorStops: [
+              { offset: 0, color: 'rgba(16, 185, 129, 0.2)' },
+              { offset: 1, color: 'rgba(16, 185, 129, 0.02)' }
+            ]
+          }
+        },
+        data: realtimeData.value.cpu,
+        animationDuration: 1000,
+        animationEasing: 'cubicOut'
+      },
+      {
+        name: '内存使用率',
+        type: 'line',
+        smooth: true,
+        lineStyle: { 
+          color: '#3B82F6', 
+          width: 3 
+        },
+        itemStyle: { 
+          color: '#3B82F6',
+          borderColor: '#3B82F6',
+          borderWidth: 2
+        },
+        areaStyle: {
+          color: {
+            type: 'linear',
+            x: 0, y: 0, x2: 0, y2: 1,
+            colorStops: [
+              { offset: 0, color: 'rgba(59, 130, 246, 0.2)' },
+              { offset: 1, color: 'rgba(59, 130, 246, 0.02)' }
+            ]
+          }
+        },
+        data: realtimeData.value.memory,
+        animationDuration: 1000,
+        animationEasing: 'cubicOut'
+      },
+      {
+        name: '磁盘使用率',
+        type: 'line',
+        smooth: true,
+        lineStyle: { 
+          color: '#8B5CF6', 
+          width: 3 
+        },
+        itemStyle: { 
+          color: '#8B5CF6',
+          borderColor: '#8B5CF6',
+          borderWidth: 2
+        },
+        areaStyle: {
+          color: {
+            type: 'linear',
+            x: 0, y: 0, x2: 0, y2: 1,
+            colorStops: [
+              { offset: 0, color: 'rgba(139, 92, 246, 0.2)' },
+              { offset: 1, color: 'rgba(139, 92, 246, 0.02)' }
+            ]
+          }
+        },
+        data: realtimeData.value.disk,
+        animationDuration: 1000,
+        animationEasing: 'cubicOut',
+        markPoint: {
+          data: [{
+            coord: [timeLabels.length - 1, realtimeData.value.disk[realtimeData.value.disk.length - 1]],
+            itemStyle: {
+              color: '#8B5CF6',
+              borderColor: '#ffffff',
+              borderWidth: 2
+            },
+            label: {
+              show: true,
+              position: 'top',
+              formatter: (params: any) => {
+                return `${realtimeInfo.value.time}\n${realtimeInfo.value.value}`
+              },
+              backgroundColor: 'rgba(255, 255, 255, 0.9)',
+              borderColor: '#8B5CF6',
+              borderWidth: 1,
+              borderRadius: 4,
+              padding: [4, 8],
+              fontSize: 11,
+              color: '#374151'
+            }
+          }]
+        },
+
+      }
+    ]
+  }
+  chartInstance.setOption(option)
+  
+  // 启动实时更新
+  startRealtimeUpdate()
+}
+
+// 生成随机数据
+const generateCpuData = (baseValue: number) => {
+  return Math.max(15, Math.min(25, baseValue + (Math.random() - 0.5) * 6))
+}
+
+const generateMemoryData = (baseValue: number) => {
+  return Math.max(35, Math.min(45, baseValue + (Math.random() - 0.5) * 8))
+}
+
+const generateDiskData = (baseValue: number) => {
+  return Math.max(60, Math.min(68, baseValue + (Math.random() - 0.5) * 6))
+}
+
+// 实时更新数据
+const updateChartData = () => {
+  if (!chartInstance) return
+  
+  // 移除第一个数据点，添加新的数据点
+  realtimeData.value.cpu.shift()
+  realtimeData.value.memory.shift()
+  realtimeData.value.disk.shift()
+  
+  // 生成新的随机数据
+  const lastCpuValue = realtimeData.value.cpu[realtimeData.value.cpu.length - 1]
+  const lastMemoryValue = realtimeData.value.memory[realtimeData.value.memory.length - 1]
+  const lastDiskValue = realtimeData.value.disk[realtimeData.value.disk.length - 1]
+  
+  const newCpuValue = generateCpuData(lastCpuValue)
+  const newMemoryValue = generateMemoryData(lastMemoryValue)
+  const newDiskValue = generateDiskData(lastDiskValue)
+  
+  realtimeData.value.cpu.push(newCpuValue)
+  realtimeData.value.memory.push(newMemoryValue)
+  realtimeData.value.disk.push(newDiskValue)
+  
+  // 更新实时信息显示（以磁盘数据为主）
+  const now = new Date()
+  realtimeInfo.value.time = now.toTimeString().slice(0, 8)
+  realtimeInfo.value.value = Math.round(newDiskValue * 100) / 100
+  
+  // 更新时间标签
+  const timeLabels = generateTimeLabels()
+  
+  // 更新图表
+  chartInstance.setOption({
+    xAxis: {
+      data: timeLabels
+    },
+    series: [
+      { data: realtimeData.value.cpu },
+      { data: realtimeData.value.memory },
+      {
+        data: realtimeData.value.disk,
+        markPoint: {
+          data: [{
+            coord: [timeLabels.length - 1, newDiskValue],
+            itemStyle: {
+              color: '#8B5CF6',
+              borderColor: '#ffffff',
+              borderWidth: 2
+            },
+            label: {
+              show: true,
+              position: 'top',
+              formatter: () => {
+                return `${realtimeInfo.value.time}\n${realtimeInfo.value.value}%`
+              },
+              backgroundColor: 'rgba(255, 255, 255, 0.9)',
+              borderColor: '#8B5CF6',
+              borderWidth: 1,
+              borderRadius: 4,
+              padding: [4, 8],
+              fontSize: 11,
+              color: '#374151'
+            }
+          }]
+        }
+      }
+    ]
+  })
+}
+
+// 启动实时更新
+const startRealtimeUpdate = () => {
+  animationTimer = setInterval(() => {
+    updateChartData()
+  }, 2000) // 每2秒更新一次
+}
+
+// 停止实时更新
+const stopRealtimeUpdate = () => {
+  if (animationTimer) {
+    clearInterval(animationTimer)
+    animationTimer = null
+  }
+}
+
+// 初始化告警状态图表
+const initAlertStatusChart = () => {
+  if (!alertStatusChart.value) return
+  
+  const chart = echarts.init(alertStatusChart.value)
+  const option = {
+    tooltip: {
+      trigger: 'item',
+      formatter: '{a} <br/>{b}: {c} ({d}%)'
+    },
+    series: [
+      {
+        name: '告警状态',
+        type: 'pie',
+        radius: ['40%', '70%'],
+        avoidLabelOverlap: false,
+        label: {
+          show: false,
+          position: 'center'
+        },
+        emphasis: {
+          label: {
+            show: true,
+            fontSize: '14',
+            fontWeight: 'bold'
+          }
+        },
+        labelLine: {
+          show: false
+        },
+        data: [
+          { 
+            value: 42, 
+            name: '异常告警',
+            itemStyle: { color: '#6366f1' }
+          },
+          { 
+            value: 58, 
+            name: '正常告警',
+            itemStyle: { color: '#10b981' }
+          }
+        ]
+      }
+    ]
+  }
+  chart.setOption(option)
+}
+
+// 初始化告警级别图表
+const initAlertLevelChart = () => {
+  if (!alertLevelChart.value) return
+  
+  const chart = echarts.init(alertLevelChart.value)
+  const option = {
+    tooltip: {
+      trigger: 'item',
+      formatter: '{a} <br/>{b}: {c} ({d}%)'
+    },
+    series: [
+      {
+        name: '告警级别',
+        type: 'pie',
+        radius: ['40%', '70%'],
+        avoidLabelOverlap: false,
+        label: {
+          show: false,
+          position: 'center'
+        },
+        emphasis: {
+          label: {
+            show: true,
+            fontSize: '14',
+            fontWeight: 'bold'
+          }
+        },
+        labelLine: {
+          show: false
+        },
+        data: [
+          { 
+            value: 42, 
+            name: 'CPU告警',
+            itemStyle: { color: '#ff7875' }
+          },
+          { 
+            value: 42, 
+            name: '内存告警',
+            itemStyle: { color: '#ffa940' }
+          },
+          { 
+            value: 16, 
+            name: '磁盘告警',
+            itemStyle: { color: '#52c41a' }
+          }
+        ]
+      }
+    ]
+  }
+  chart.setOption(option)
+}
+
+// 更新告警状态图表
+const updateAlertStatusChart = () => {
+  initAlertStatusChart()
+}
+
+// 更新告警级别图表
+const updateAlertLevelChart = () => {
+  initAlertLevelChart()
+}
+
+onMounted(async () => {
+  await nextTick()
+  initSystemChart()
+  initAlertStatusChart()
+  initAlertLevelChart()
+  loadTaskData()
+})
+
+// 组件卸载时清理定时器
+onUnmounted(() => {
+  stopRealtimeUpdate()
+  if (chartInstance) {
+    chartInstance.dispose()
+    chartInstance = null
+  }
 })
 </script>
 
 <style scoped lang="scss">
 .dashboard {
-  min-height: 100%;
-  display: grid;
-  grid-gap: 24px;
-  grid-template-rows: auto auto 1fr;
-}
-
-.page-header {
-  .page-title {
-    font-size: 32px;
-    font-weight: 700;
-    color: #1a202c;
-    margin: 0 0 8px 0;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .page-subtitle {
-    font-size: 16px;
-    color: #718096;
-    margin: 0;
-  }
+  padding: 24px;
+  background: #f8fafc;
+  min-height: 100vh;
 }
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
-}
-
-.stat-card {
-  background: white;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: repeat(6, 1fr);
   gap: 16px;
-  align-items: center;
-  border: 1px solid #e2e8f0;
-  transition: all 0.3s ease;
+  margin-bottom: 24px;
 
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-  }
-
-  .stat-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
+  .stat-card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
     display: flex;
     align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    color: white;
+    gap: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
 
-    &.user-icon {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
     }
 
-    &.task-icon {
-      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    &.stat-card-1::before {
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
     }
 
-    &.device-icon {
-      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    &.stat-card-2::before {
+      background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%);
     }
 
-    &.online-icon {
-      background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-    }
-  }
-
-  .stat-info {
-    .stat-number {
-      font-size: 32px;
-      font-weight: 700;
-      color: #1a202c;
-      line-height: 1;
+    &.stat-card-3::before {
+      background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
     }
 
-    .stat-label {
-      font-size: 14px;
-      color: #718096;
-      margin-top: 4px;
-    }
-  }
-
-  .stat-trend {
-    .trend-up {
-      color: #10b981;
-      font-weight: 600;
+    &.stat-card-4::before {
+      background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
     }
 
-    .trend-down {
-      color: #ef4444;
-      font-weight: 600;
+    &.stat-card-5::before {
+      background: linear-gradient(90deg, #fa709a 0%, #fee140 100%);
+    }
+
+    &.stat-card-6::before {
+      background: linear-gradient(90deg, #a8edea 0%, #fed6e3 100%);
+    }
+
+    .stat-icon {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      img {
+        width: 32px;
+        height: 32px;
+      }
+    }
+
+    .stat-info {
+      flex: 1;
+
+      .stat-number {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 4px;
+      }
+
+      .stat-label {
+        font-size: 12px;
+        color: #6b7280;
+      }
     }
   }
 }
 
-.content-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 24px;
-}
+.charts-section {
+  margin-bottom: 24px;
 
-.content-card {
+  .system-chart {
+    margin-bottom: 16px;
+    position: relative;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #10B981, #3B82F6, #06B6D4);
+      border-radius: 8px 8px 0 0;
+      animation: monitoring-pulse 3s ease-in-out infinite;
+    }
+    
+    .chart-title {
+      position: relative;
+      
+      &::after {
+        content: '●';
+        color: #10B981;
+        margin-left: 8px;
+        animation: blink 2s ease-in-out infinite;
+      }
+    }
+  }
+
+  .alert-section {
+    display: flex;
+    gap: 16px;
+
+    .alert-card {
+      flex: 1;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+      .alert-header {
+        padding: 16px 20px;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        .alert-title {
+          font-size: 16px;
+          font-weight: 600;
+          color: #1f2937;
+          margin: 0;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+
+          .alert-icon {
+            font-size: 14px;
+          }
+          
+          .alert-icon-img {
+            width: 16px;
+            height: 16px;
+            object-fit: contain;
+          }
+        }
+      }
+
+      .alert-content {
+        padding: 20px;
+
+        .alert-charts {
+          display: flex;
+          gap: 16px;
+          margin-bottom: 16px;
+
+          .alert-chart-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+
+            .chart-selector {
+              margin-bottom: 12px;
+              
+              select {
+                padding: 4px 8px;
+                border: 1px solid #d1d5db;
+                border-radius: 4px;
+                font-size: 12px;
+                color: #374151;
+                background: white;
+                cursor: pointer;
+                
+                &:focus {
+                  outline: none;
+                  border-color: #3b82f6;
+                }
+              }
+            }
+
+            .alert-pie-chart {
+              width: 100%;
+              height: 160px;
+              margin-bottom: 16px;
+            }
+
+            .alert-chart-label {
+              font-size: 12px;
+              color: #6b7280;
+            }
+          }
+        }
+
+                 .alert-legends {
+           display: flex;
+           flex-direction: column;
+           gap: 8px;
+           margin-top: 16px;
+
+           .legend-row {
+             display: flex;
+             justify-content: space-between;
+             align-items: center;
+             
+             .legend-item {
+               display: flex;
+               align-items: center;
+               gap: 6px;
+               font-size: 12px;
+               color: #6b7280;
+               
+               .legend-dot {
+                 width: 8px;
+                 height: 8px;
+                 border-radius: 50%;
+               }
+             }
+             
+             .legend-percentage {
+               color: #6b7280;
+               font-size: 12px;
+               font-weight: 500;
+             }
+           }
+         }
+       }
+     }
+
+    .device-alert-card {
+      flex: 1;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+      .device-alert-header {
+        padding: 16px 20px;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        .device-alert-title {
+          font-size: 16px;
+          font-weight: 600;
+          color: #1f2937;
+          margin: 0;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+
+          .device-alert-icon {
+            font-size: 14px;
+          }
+          
+          .device-alert-icon-img {
+            width: 16px;
+            height: 16px;
+            object-fit: contain;
+          }
+        }
+      }
+
+             .device-alert-content {
+         padding: 20px;
+
+         .device-alert-list {
+           display: flex;
+           flex-direction: column;
+           gap: 12px;
+
+           .device-alert-item {
+             background: #f8fafc;
+             border-radius: 8px;
+             padding: 16px;
+             border-left: 4px solid #3b82f6;
+             transition: all 0.3s ease;
+             
+             &:hover {
+               background: #f1f5f9;
+               transform: translateX(2px);
+             }
+             
+                           .alert-type-header {
+                display: flex;
+                gap: 8px;
+                margin-bottom: 12px;
+                
+                .alert-type-badge {
+                  background: #3b82f6;
+                  color: white;
+                  padding: 4px 8px;
+                  border-radius: 4px;
+                  font-size: 10px;
+                  font-weight: 500;
+                }
+                
+                .alert-category-badge {
+                  background: #6366f1;
+                  color: white;
+                  padding: 4px 8px;
+                  border-radius: 4px;
+                  font-size: 10px;
+                  font-weight: 500;
+                }
+                
+                .alert-phase-badge {
+                  padding: 4px 8px;
+                  border-radius: 4px;
+                  font-size: 10px;
+                  font-weight: 500;
+                  color: white;
+                  
+                  &.alert-critical {
+                    background: #ef4444;
+                    animation: pulse 2s infinite;
+                  }
+                  
+                  &.alert-warning {
+                    background: #f59e0b;
+                  }
+                  
+                  &.alert-normal {
+                    background: #10b981;
+                  }
+                }
+              }
+
+                           .alert-details {
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+                
+                .alert-detail-line {
+                  font-size: 12px;
+                  color: #374151;
+                  line-height: 1.5;
+                  padding: 2px 0;
+                  
+                  &:first-child {
+                    font-weight: 600;
+                    color: #1f2937;
+                    font-size: 13px;
+                  }
+                  
+                  &:nth-child(2) {
+                    color: #6b7280;
+                    font-family: 'Courier New', monospace;
+                  }
+                  
+                  &:last-child {
+                    color: #059669;
+                    font-style: italic;
+                  }
+                }
+              }
+           }
+         }
+      }
+    }
+     }
+ }
+
+.chart-card {
   background: white;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  overflow: hidden;
-  transition: all 0.3s ease;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 
-  &:hover {
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-  }
+  .chart-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #e5e7eb;
 
-  .card-header {
-    padding: 24px 24px 16px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #f1f5f9;
-
-    .card-title {
-      font-size: 18px;
+    .chart-title {
+      font-size: 16px;
       font-weight: 600;
-      color: #1a202c;
+      color: #1f2937;
       margin: 0;
-    }
-  }
-
-  .card-content {
-    padding: 16px 24px 24px;
-  }
-}
-
-.task-list {
-  .task-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 0;
-    border-bottom: 1px solid #f1f5f9;
-
-    &:last-child {
-      border-bottom: none;
-    }
-
-    .task-info {
-      .task-name {
-        font-weight: 500;
-        color: #1a202c;
-        margin-bottom: 4px;
-      }
-
-      .task-time {
-        font-size: 12px;
-        color: #718096;
-      }
-    }
-  }
-}
-
-.device-list {
-  .device-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 0;
-    border-bottom: 1px solid #f1f5f9;
-
-    &:last-child {
-      border-bottom: none;
-    }
-
-    .device-info {
-      .device-name {
-        font-weight: 500;
-        color: #1a202c;
-        margin-bottom: 4px;
-      }
-
-      .device-time {
-        font-size: 12px;
-        color: #718096;
-      }
-    }
-
-    .device-status {
       display: flex;
       align-items: center;
       gap: 8px;
 
-      .status-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
+      .chart-icon {
+        font-size: 14px;
+      }
+      
+      .chart-icon-img {
+        width: 16px;
+        height: 16px;
+        object-fit: contain;
+      }
+    }
+  }
 
-        &.online {
-          background: #10b981;
-        }
+  .chart-content {
+    padding: 20px;
+  }
 
-        &.offline {
-          background: #ef4444;
+  .chart-legend {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+
+    .legend-items {
+      display: flex;
+      gap: 24px;
+      
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: #6b7280;
+
+        .legend-dot {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+
+          &.cpu { background: #10B981; }
+          &.memory { background: #3B82F6; }
+          &.disk { background: #8B5CF6; }
         }
       }
-
-      .status-text {
-        font-size: 14px;
+    }
+    
+    .legend-realtime-value {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+      
+      .realtime-time {
+        font-size: 11px;
+        color: #6b7280;
         font-weight: 500;
       }
+      
+      .realtime-value {
+        font-size: 16px;
+        font-weight: 700;
+        color: #8B5CF6;
+      }
     }
   }
+
+  .chart-container {
+    height: 200px;
+  }
+
+  .pie-chart {
+    height: 180px;
+    margin-bottom: 16px;
+  }
 }
+ 
+ .device-table-section {
+  .table-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 
-.performance-metrics {
-  .metric {
-    margin-bottom: 24px;
+    .table-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
 
-    &:last-child {
-      margin-bottom: 0;
+      .table-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #1f2937;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        .table-icon {
+          font-size: 14px;
+        }
+        
+        .table-icon-img {
+          width: 16px;
+          height: 16px;
+          object-fit: contain;
+        }
+      }
+
+      .table-actions {
+        display: flex;
+        gap: 8px;
+
+        .action-btn {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          padding: 6px 12px;
+          border-radius: 4px;
+          border: none;
+          font-size: 12px;
+          cursor: pointer;
+          transition: all 0.2s;
+
+          .btn-icon {
+            font-size: 12px;
+          }
+          
+          .btn-icon-img {
+            width: 12px;
+            height: 12px;
+            object-fit: contain;
+            filter: brightness(0) invert(1);
+          }
+
+          &.create-btn {
+            background: #10b981;
+            color: white;
+
+            &:hover {
+              background: #059669;
+            }
+          }
+
+          &.download-btn {
+            background: #3b82f6;
+            color: white;
+
+            &:hover {
+              background: #2563eb;
+            }
+          }
+
+          &.progress-btn {
+            background: #f59e0b;
+            color: white;
+
+            &:hover {
+              background: #d97706;
+            }
+          }
+
+          &.import-btn {
+            background: #8b5cf6;
+            color: white;
+
+            &:hover {
+              background: #7c3aed;
+            }
+          }
+        }
+      }
     }
 
-    .metric-label {
-      font-size: 14px;
-      color: #718096;
-      margin-bottom: 8px;
-    }
+    .table-content {
+      overflow-x: auto;
 
-    .metric-value {
-      font-size: 24px;
-      font-weight: 700;
-      color: #1a202c;
-      margin-bottom: 8px;
-    }
+      .loading-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 60px 20px;
 
-    .metric-bar {
-      height: 8px;
-      background: #f1f5f9;
-      border-radius: 4px;
-      overflow: hidden;
+        .loading-text {
+          color: #6b7280;
+          font-size: 14px;
+        }
+      }
 
-      .metric-progress {
-        height: 100%;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        transition: width 0.3s ease;
+      .device-table {
+        width: 100%;
+        border-collapse: collapse;
+
+        th {
+          background: #f9fafb;
+          padding: 12px 16px;
+          text-align: left;
+          font-size: 12px;
+          font-weight: 600;
+          color: #374151;
+          border-bottom: 1px solid #e5e7eb;
+          white-space: nowrap;
+        }
+
+        td {
+          padding: 12px 16px;
+          font-size: 12px;
+          color: #6b7280;
+          border-bottom: 1px solid #f3f4f6;
+          white-space: nowrap;
+        }
+
+        .status-tag {
+          padding: 2px 8px;
+          border-radius: 12px;
+          font-size: 11px;
+          font-weight: 500;
+
+          &.status-unassigned {
+            background: #fef2f2;
+            color: #dc2626;
+          }
+
+          &.status-assigned {
+            background: #eff6ff;
+            color: #2563eb;
+          }
+
+          &.status-processing {
+            background: #fef3c7;
+            color: #d97706;
+          }
+
+          &.status-completed {
+            background: #ecfdf5;
+            color: #059669;
+          }
+        }
       }
     }
   }
 }
 
-.activity-list {
-  .activity-item {
-    display: flex;
-    gap: 16px;
-    padding: 12px 0;
-    border-bottom: 1px solid #f1f5f9;
-
-    &:last-child {
-      border-bottom: none;
-    }
-
-    .activity-time {
-      font-size: 12px;
-      color: #718096;
-      font-weight: 500;
-      min-width: 40px;
-    }
-
-    .activity-content {
-      font-size: 14px;
-      color: #1a202c;
-    }
+// 响应式设计
+@media (max-width: 1400px) {
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 
-/* 响应式设计 */
-@media (max-width: 1200px) {
+@media (max-width: 1024px) {
   .stats-grid {
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
   }
-
-  .content-grid {
-    grid-template-columns: 1fr;
+  
+  .alert-section {
+    flex-direction: column;
   }
 }
 
 @media (max-width: 768px) {
   .dashboard {
-    grid-gap: 16px;
+    padding: 16px;
   }
 
   .stats-grid {
     grid-template-columns: 1fr;
   }
 
-  .stat-card {
-    padding: 20px;
+  .table-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
   }
+  
+  .alert-section {
+    flex-direction: column;
+  }
+}
 
-  .page-header .page-title {
-    font-size: 24px;
+// 实时监控动画
+@keyframes monitoring-pulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scaleX(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleX(1.02);
+  }
+}
+
+@keyframes blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes criticalPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 1), 0 0 0 0 rgba(239, 68, 68, 0.7);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.05);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 1), 0 0 0 8px rgba(239, 68, 68, 0);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  33% {
+    transform: translateY(-10px) rotate(1deg);
+  }
+  66% {
+    transform: translateY(5px) rotate(-1deg);
   }
 }
 </style> 

@@ -64,6 +64,13 @@
             </el-tag>
           </template>
         </el-table-column>
+        <el-table-column label="照片已上传" width="120">
+          <template #default="scope">
+            <el-tag :type="scope.row.photo_data ? 'success' : 'info'" size="small">
+              {{ scope.row.photo_data ? '已上传' : '未上传' }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="created_at" label="创建时间" />
         <el-table-column label="操作" width="200">
           <template #default="scope">

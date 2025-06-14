@@ -4,10 +4,16 @@
       <template #header>
         <div class="card-header">
           <span>任务管理</span>
-          <el-button type="primary" @click="handleAdd">
-            <el-icon><Plus /></el-icon>
-            新增任务
-          </el-button>
+          <div class="header-actions">
+            <el-button type="primary" @click="handleBulkImport">
+              <el-icon><Upload /></el-icon>
+              批量导入任务
+            </el-button>
+            <el-button type="primary" @click="handleAdd">
+              <el-icon><Plus /></el-icon>
+              新增任务
+            </el-button>
+          </div>
         </div>
       </template>
 
@@ -142,13 +148,132 @@
         </span>
       </template>
     </el-dialog>
+
+    <!-- 批量导入任务对话框 -->
+    <el-dialog
+      v-model="bulkImportVisible"
+      title="批量导入任务"
+      width="600px"
+      :close-on-click-modal="false"
+    >
+      <div class="import-content">
+        <div class="upload-section">
+          <div class="upload-header">
+            <span>选择导入文件</span>
+            <el-button 
+              type="text" 
+              @click="downloadTemplate"
+              :loading="downloadLoading"
+            >
+              <el-icon><Download /></el-icon>
+              下载导入模板
+            </el-button>
+          </div>
+          <el-upload
+            class="upload-area"
+            drag
+            :auto-upload="false"
+            :show-file-list="false"
+            :before-upload="beforeUpload"
+            accept=".xlsx,.xls,.csv"
+            @change="handleFileChange"
+          >
+            <div class="upload-content">
+              <el-icon class="upload-icon"><Plus /></el-icon>
+              <div class="upload-text">
+                <div class="main-text">添加文件</div>
+                <div class="sub-text">
+                  请选择要导入的Excel或CSV文件，支持xls、xlsx、csv格式
+                </div>
+              </div>
+            </div>
+          </el-upload>
+          
+          <div v-if="selectedFile" class="file-info">
+            <div class="file-name">
+              <el-icon><Document /></el-icon>
+              {{ selectedFile.name }}
+            </div>
+            <el-button 
+              type="text" 
+              @click="clearFile"
+              class="clear-btn"
+            >
+              <el-icon><Delete /></el-icon>
+              清除选择
+            </el-button>
+          </div>
+          
+          <div v-if="!selectedFile" class="no-file-tips">
+            尚未选择文件
+          </div>
+        </div>
+        
+        <div class="template-tips">
+          <p>下载标准的任务导入模板，包含任务名称、任务类型、阶段、任务描述等字段。</p>
+        </div>
+      </div>
+      
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="bulkImportVisible = false">取消</el-button>
+          <el-button 
+            type="primary" 
+            @click="handleImport"
+            :loading="importLoading"
+            :disabled="!selectedFile"
+          >
+            导入
+          </el-button>
+        </span>
+      </template>
+    </el-dialog>
+
+    <!-- 导入结果对话框 -->
+    <el-dialog
+      v-model="resultVisible"
+      title="导入结果"
+      width="600px"
+    >
+      <div class="import-result">
+        <div class="result-summary">
+          <div class="success-info">
+            <el-icon color="#67C23A"><SuccessFilled /></el-icon>
+            <span>成功导入 {{ importResult.success_count }} 个任务</span>
+          </div>
+          <div v-if="importResult.fail_count > 0" class="fail-info">
+            <el-icon color="#F56C6C"><CircleCloseFilled /></el-icon>
+            <span>失败 {{ importResult.fail_count }} 个任务</span>
+          </div>
+        </div>
+        
+        <div v-if="importResult.failed_tasks.length > 0" class="failed-list">
+          <h4>失败列表：</h4>
+          <el-table :data="importResult.failed_tasks" style="width: 100%">
+            <el-table-column prop="name" label="任务名称" />
+            <el-table-column prop="error" label="失败原因" />
+          </el-table>
+        </div>
+      </div>
+      
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button type="primary" @click="resultVisible = false">
+            确定
+          </el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
-import { Plus, Search } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox, type FormInstance, type UploadFile } from 'element-plus'
+import { 
+  Plus, Search, Upload, Download, Document, Delete, 
+  SuccessFilled, CircleCloseFilled 
+} from '@element-plus/icons-vue'
 import { getTasks, getTasksCount, createTask, updateTask, deleteTask, getTask } from '@/api/task'
 
 interface Task {
@@ -164,8 +289,13 @@ interface Task {
 
 const loading = ref(false)
 const dialogVisible = ref(false)
+const bulkImportVisible = ref(false)
+const resultVisible = ref(false)
 const isEdit = ref(false)
 const formRef = ref<FormInstance>()
+const downloadLoading = ref(false)
+const importLoading = ref(false)
+const selectedFile = ref<File | null>(null)
 
 const searchForm = reactive({
   name: '',
@@ -188,6 +318,13 @@ const pagination = reactive({
 })
 
 const tasks = ref<Task[]>([])
+
+const importResult = reactive({
+  success_count: 0,
+  fail_count: 0,
+  failed_tasks: [],
+  message: ''
+})
 
 const rules = {
   name: [
@@ -348,6 +485,91 @@ const handleCurrentChange = (val: number) => {
   loadTasks()
 }
 
+// 批量导入相关方法
+const handleBulkImport = () => {
+  bulkImportVisible.value = true
+  selectedFile.value = null
+}
+
+const downloadTemplate = async () => {
+  downloadLoading.value = true
+  try {
+    // 模拟下载模板功能
+    const csvContent = "任务名称,任务类型,阶段,任务描述\n网络设备维护,运维监控任务,计划阶段,检查网络设备运行状态\n系统更新,运维管理任务,执行阶段,更新系统软件和补丁"
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'task_import_template.csv'
+    link.click()
+    window.URL.revokeObjectURL(url)
+    ElMessage.success('模板下载成功')
+  } catch (error) {
+    console.error('下载模板失败:', error)
+    ElMessage.error('下载模板失败')
+  } finally {
+    downloadLoading.value = false
+  }
+}
+
+const beforeUpload = (file: File) => {
+  const isExcel = file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || 
+                  file.type === 'application/vnd.ms-excel' ||
+                  file.type === 'text/csv'
+  if (!isExcel) {
+    ElMessage.error('只能上传Excel或CSV文件!')
+    return false
+  }
+  const isLt10M = file.size / 1024 / 1024 < 10
+  if (!isLt10M) {
+    ElMessage.error('文件大小不能超过10MB!')
+    return false
+  }
+  return false // 阻止自动上传
+}
+
+const handleFileChange = (file: UploadFile) => {
+  if (file.raw) {
+    selectedFile.value = file.raw
+  }
+}
+
+const clearFile = () => {
+  selectedFile.value = null
+}
+
+const handleImport = async () => {
+  if (!selectedFile.value) {
+    ElMessage.error('请选择要导入的文件')
+    return
+  }
+  
+  importLoading.value = true
+  try {
+    // 模拟批量导入任务功能
+    await new Promise(resolve => setTimeout(resolve, 2000))
+    
+    Object.assign(importResult, {
+      success_count: 3,
+      fail_count: 1,
+      failed_tasks: [
+        { name: '测试任务', error: '任务名称重复' }
+      ],
+      message: '导入完成'
+    })
+    
+    bulkImportVisible.value = false
+    resultVisible.value = true
+    loadTasks() // 刷新任务列表
+    ElMessage.success('批量导入完成')
+  } catch (error: any) {
+    console.error('批量导入失败:', error)
+    ElMessage.error('批量导入失败')
+  } finally {
+    importLoading.value = false
+  }
+}
+
 onMounted(() => {
   loadTasks()
 })
@@ -359,6 +581,11 @@ onMounted(() => {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    
+    .header-actions {
+      display: flex;
+      gap: 10px;
+    }
   }
 
   .search-bar {
@@ -371,6 +598,156 @@ onMounted(() => {
   .pagination {
     margin-top: 20px;
     text-align: right;
+  }
+}
+
+.import-content {
+  .upload-section {
+    margin-bottom: 20px;
+    
+    .upload-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      
+      span {
+        font-weight: 500;
+        color: #303133;
+      }
+    }
+    
+    .upload-area {
+      :deep(.el-upload-dragger) {
+        width: 100%;
+        height: 120px;
+        border: 2px dashed #d9d9d9;
+        border-radius: 6px;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        transition: border-color 0.2s cubic-bezier(0.645, 0.045, 0.355, 1);
+        
+        &:hover {
+          border-color: #409eff;
+        }
+      }
+    }
+    
+    .upload-content {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      
+      .upload-icon {
+        font-size: 28px;
+        color: #8c939d;
+        margin-right: 16px;
+      }
+      
+      .upload-text {
+        .main-text {
+          color: #606266;
+          font-size: 14px;
+          text-align: center;
+        }
+        
+        .sub-text {
+          color: #909399;
+          font-size: 12px;
+          margin-top: 2px;
+          text-align: center;
+        }
+      }
+    }
+    
+    .file-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      background: #f0f9ff;
+      border: 1px solid #b3d8ff;
+      border-radius: 4px;
+      margin-top: 10px;
+      
+      .file-name {
+        display: flex;
+        align-items: center;
+        color: #409eff;
+        font-size: 14px;
+        
+        .el-icon {
+          margin-right: 5px;
+        }
+      }
+      
+      .clear-btn {
+        color: #f56c6c;
+        font-size: 12px;
+      }
+    }
+    
+    .no-file-tips {
+      text-align: center;
+      color: #909399;
+      font-size: 12px;
+      margin-top: 10px;
+    }
+  }
+  
+  .template-tips {
+    padding: 12px;
+    background: #f0f9ff;
+    border-left: 4px solid #409eff;
+    border-radius: 4px;
+    
+    p {
+      margin: 0;
+      color: #409eff;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+  }
+}
+
+.import-result {
+  .result-summary {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+    
+    .success-info,
+    .fail-info {
+      display: flex;
+      align-items: center;
+      
+      .el-icon {
+        margin-right: 8px;
+        font-size: 16px;
+      }
+      
+      span {
+        font-size: 14px;
+      }
+    }
+    
+    .success-info span {
+      color: #67C23A;
+    }
+    
+    .fail-info span {
+      color: #F56C6C;
+    }
+  }
+  
+  .failed-list {
+    h4 {
+      margin: 0 0 10px 0;
+      color: #303133;
+      font-size: 14px;
+    }
   }
 }
 </style> 

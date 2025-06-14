@@ -81,153 +81,115 @@
         </div>
         <div class="chart-content">
           <div class="chart-legend">
-            <span class="legend-item">
-              <span class="legend-dot cpu"></span>
-              CPU 使用率
-            </span>
-            <span class="legend-item">
-              <span class="legend-dot memory"></span>
-              内存使用率
-            </span>
-            <span class="legend-item">
-              <span class="legend-dot disk"></span>
-              硬盘使用率
+            <div class="legend-items">
+              <span class="legend-item">
+                <span class="legend-dot cpu"></span>
+                CPU 使用率
+              </span>
+              <span class="legend-item">
+                <span class="legend-dot memory"></span>
+                内存使用率
+              </span>
+              <span class="legend-item">
+                <span class="legend-dot disk"></span>
+                磁盘使用率
+              </span>
+            </div>
+            <span class="legend-realtime-value">
+              <span class="realtime-time">{{ realtimeInfo.time }}</span>
+              <span class="realtime-value">{{ realtimeInfo.value }}%</span>
             </span>
           </div>
           <div ref="systemChart" class="chart-container"></div>
         </div>
       </div>
 
-      <!-- 告警信息图表 -->
-      <div class="charts-row">
-        <div class="chart-card alarm-chart">
-          <div class="chart-header">
-            <div class="header-left">
-              <div class="chart-icon-wrapper">
-                <img src="@/assets/icon/组 3261.png" alt="告警信息" class="chart-icon-img" />
-              </div>
-              <h3 class="chart-title">告警信息统计</h3>
-            </div>
-            <div class="alert-summary">
-              <span class="alert-count critical">{{ alarmStats.critical }}</span>
-              <span class="alert-count warning">{{ alarmStats.warning }}</span>
-              <span class="alert-count info">{{ alarmStats.info }}</span>
-            </div>
+      <!-- 告警信息和设备告警区域 -->
+      <div class="alert-section">
+        <!-- 告警信息 -->
+        <div class="alert-card">
+          <div class="alert-header">
+            <h3 class="alert-title">
+              <img src="@/assets/icon/组 3000.png" alt="告警信息" class="alert-icon-img" />
+              告警信息
+            </h3>
           </div>
-          <div class="chart-content">
-            <div class="alarm-overview">
-              <div class="alarm-pie-section">
-                <div ref="alarmChart" class="pie-chart"></div>
-                <div class="chart-center-text">
-                  <div class="total-count">{{ alarmStats.total }}</div>
-                  <div class="total-label">总告警</div>
+          <div class="alert-content">
+            <div class="alert-charts">
+              <!-- 告警状态统计 -->
+              <div class="alert-chart-item">
+                <div class="chart-selector">
+                  <select v-model="alertStatusType" @change="updateAlertStatusChart">
+                    <option value="status">告警状态</option>
+                    <option value="level">告警等级</option>
+                    <option value="type">告警类型</option>
+                  </select>
                 </div>
+                <div ref="alertStatusChart" class="alert-pie-chart"></div>
+                <div class="alert-chart-label">告警状态统计</div>
               </div>
-              <div class="alarm-details">
-                <div class="alarm-level-item critical">
-                  <div class="level-indicator"></div>
-                  <div class="level-info">
-                    <div class="level-main">
-                      <span class="level-name">严重告警</span>
-                      <span class="level-count">{{ alarmStats.critical }}条</span>
-                    </div>
-                    <div class="level-percentage">{{ ((alarmStats.critical / alarmStats.total) * 100).toFixed(1) }}%</div>
-                  </div>
+              <!-- 告警级别统计 -->
+              <div class="alert-chart-item">
+                <div class="chart-selector">
+                  <select v-model="alertLevelType" @change="updateAlertLevelChart">
+                    <option value="level">告警级别</option>
+                    <option value="region">区域分布</option>
+                    <option value="time">时段分布</option>
+                  </select>
                 </div>
-                <div class="alarm-level-item warning">
-                  <div class="level-indicator"></div>
-                  <div class="level-info">
-                    <div class="level-main">
-                      <span class="level-name">警告告警</span>
-                      <span class="level-count">{{ alarmStats.warning }}条</span>
-                    </div>
-                    <div class="level-percentage">{{ ((alarmStats.warning / alarmStats.total) * 100).toFixed(1) }}%</div>
-                  </div>
+                <div ref="alertLevelChart" class="alert-pie-chart"></div>
+                <div class="alert-chart-label">告警级别统计</div>
+              </div>
+            </div>
+            <!-- 图例 -->
+            <div class="alert-legends">
+              <div class="legend-row">
+                <div class="legend-item">
+                  <span class="legend-dot" style="background: #ff7875;"></span>
+                  CPU告警
                 </div>
-                <div class="alarm-level-item info">
-                  <div class="level-indicator"></div>
-                  <div class="level-info">
-                    <div class="level-main">
-                      <span class="level-name">提示告警</span>
-                      <span class="level-count">{{ alarmStats.info }}条</span>
-                    </div>
-                    <div class="level-percentage">{{ ((alarmStats.info / alarmStats.total) * 100).toFixed(1) }}%</div>
-                  </div>
+                <div class="legend-percentage">42%</div>
+              </div>
+              <div class="legend-row">
+                <div class="legend-item">
+                  <span class="legend-dot" style="background: #ffa940;"></span>
+                  内存告警
                 </div>
-                <div class="alarm-level-item resolved">
-                  <div class="level-indicator"></div>
-                  <div class="level-info">
-                    <div class="level-main">
-                      <span class="level-name">已解决</span>
-                      <span class="level-count">{{ alarmStats.resolved }}条</span>
-                    </div>
-                    <div class="level-percentage">{{ ((alarmStats.resolved / alarmStats.total) * 100).toFixed(1) }}%</div>
-                  </div>
+                <div class="legend-percentage">42%</div>
+              </div>
+              <div class="legend-row">
+                <div class="legend-item">
+                  <span class="legend-dot" style="background: #52c41a;"></span>
+                  磁盘告警
                 </div>
+                <div class="legend-percentage">42%</div>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="chart-card device-alert-card">
-          <div class="chart-header">
-            <div class="header-left">
-              <div class="chart-icon-wrapper">
-                <img src="@/assets/icon/组 3262.png" alt="设备告警" class="chart-icon-img" />
-              </div>
-              <h3 class="chart-title">实时告警动态</h3>
-            </div>
-            <div class="refresh-indicator">
-              <span class="refresh-dot"></span>
-              <span class="refresh-text">实时更新</span>
-            </div>
+        <!-- 设备告警 -->
+        <div class="device-alert-card">
+          <div class="device-alert-header">
+            <h3 class="device-alert-title">
+              <img src="@/assets/icon/组 3000.png" alt="设备告警" class="device-alert-icon-img" />
+              设备告警
+            </h3>
           </div>
           <div class="device-alert-content">
-            <div class="alert-list">
-              <div 
-                class="alert-item" 
-                v-for="(alert, index) in realtimeAlerts" 
-                :key="index"
-                :class="['alert-item', `level-${alert.level}`]"
-              >
-                <div class="alert-left">
-                  <div class="alert-status-dot" :class="`dot-${alert.level}`"></div>
-                  <div class="alert-info">
-                    <div class="alert-title">{{ alert.title }}</div>
-                    <div class="alert-meta">
-                      <span class="alert-device">
-                        <i class="device-icon">🖥️</i>
-                        {{ alert.device }}
-                      </span>
-                      <span class="alert-category-badge" :class="`category-${alert.category}`">
-                        {{ alert.category }}
-                      </span>
-                    </div>
-                    <div class="alert-description">{{ alert.description }}</div>
-                  </div>
+            <div class="device-alert-list">
+              <div v-for="(alert, index) in systemAlertData" :key="index" class="device-alert-item">
+                <div class="alert-type-header">
+                  <span class="alert-type-badge">{{ alert.type }}</span>
+                  <span class="alert-category-badge">{{ alert.category }}</span>
+                  <span class="alert-phase-badge" :class="getAlertLevelClass(alert.phase)">{{ alert.phase }}</span>
                 </div>
-                <div class="alert-right">
-                  <div class="alert-time">{{ alert.time }}</div>
-                  <div class="alert-actions">
-                    <button class="action-btn view-btn" @click="handleViewAlert(alert.id)">
-                      <i class="icon">👁️</i>
-                    </button>
-                    <button class="action-btn handle-btn" @click="handleProcessAlert(alert.id)">
-                      <i class="icon">⚡</i>
-                    </button>
-                  </div>
+                <div class="alert-details">
+                  <div class="alert-detail-line">{{ alert.detail1 }}</div>
+                  <div class="alert-detail-line">{{ alert.detail2 }}</div>
+                  <div class="alert-detail-line">{{ alert.detail3 }}</div>
                 </div>
               </div>
-            </div>
-            <div class="alert-footer">
-              <button class="footer-btn view-all" @click="handleViewAllAlerts">
-                <i class="btn-icon">📋</i>
-                查看全部告警
-              </button>
-              <button class="footer-btn export-report" @click="handleExportReport">
-                <i class="btn-icon">📊</i>
-                导出报告
-              </button>
             </div>
           </div>
         </div>
@@ -324,20 +286,47 @@ interface DeviceInfo {
   status: string
 }
 
+
+
 const systemChart = ref<HTMLElement>()
-const alarmChart = ref<HTMLElement>()
 const deviceChart = ref<HTMLElement>()
+const alertStatusChart = ref<HTMLElement>()
+const alertLevelChart = ref<HTMLElement>()
 const taskManagementRef = ref<InstanceType<typeof TaskManagement>>()
 
 // 实时数据
 const realtimeData = ref({
-  cpu: [15, 12, 18, 25, 28, 32, 24, 20, 16, 18, 22],
-  memory: [32, 28, 25, 15, 35, 42, 38, 25, 22, 18, 25],
-  disk: [45, 42, 35, 30, 28, 25, 30, 35, 40, 38, 42]
+  cpu: [18, 20, 22, 19, 21, 20, 23, 18, 19, 21, 20],
+  memory: [38, 40, 42, 39, 41, 40, 43, 38, 39, 41, 40],
+  disk: [62, 64, 66, 63, 65, 64, 67, 62, 63, 65, 64]
+})
+
+// 实时信息显示
+const realtimeInfo = ref({
+  time: '18:35:12',
+  value: 64
 })
 
 let chartInstance: any = null
 let animationTimer: any = null
+
+// 告警图表选择器状态
+const alertStatusType = ref('status')
+const alertLevelType = ref('level')
+
+// 生成时间标签
+const generateTimeLabels = () => {
+  const labels = []
+  const now = new Date()
+  
+  for (let i = 10; i >= 0; i--) {
+    const time = new Date(now.getTime() - i * 10000) // 每10秒一个点
+    const timeStr = time.toTimeString().slice(0, 8)
+    labels.push(timeStr)
+  }
+  
+  return labels
+}
 
 // 任务列表数据 - 使用后端API
 const taskList = ref<Task[]>([])
@@ -347,82 +336,27 @@ const taskStats = ref({
 })
 const taskLoading = ref(false)
 
-// 设备告警数据
-const deviceAlertData = ref([
+// 系统告警数据
+const systemAlertData = ref([
   {
-    type1: '蟹农APP AI信息模拟测试',
-    type2: '开发测试任务',
-    phase: '模拟用户审批请求'
+    type: '服务器告警',
+    category: '资源告警',
+    phase: '严重告警',
+    detail1: '服务器节点1 - CPU使用率过高 (85%)',
+    detail2: '内存使用率: 78% | 可用空间不足',
+    detail3: '建议立即检查进程占用情况'
   },
   {
-    type1: '全网设备接入INC',
-    type2: '运维监管任务',
-    phase: '设备管理'
-  },
-  {
-    type1: 'AI运维平台监管',
-    type2: '运维监管任务',
-    phase: '运维监管'
+    type: '存储告警',
+    category: '磁盘告警',
+    phase: '警告',
+    detail1: '服务器节点2 - 磁盘空间不足 (92%)',
+    detail2: '系统盘 /dev/sda1 剩余空间: 2.1GB',
+    detail3: '建议清理日志文件或扩容'
   }
 ])
 
-// 告警统计数据
-const alarmStats = ref({
-  critical: 3,
-  warning: 8,
-  info: 12,
-  resolved: 25,
-  total: 48
-})
 
-// 实时告警动态数据
-const realtimeAlerts = ref([
-  {
-    id: 1,
-    title: 'CPU使用率过高',
-    level: 'critical',
-    device: '服务器-01',
-    category: '系统',
-    description: 'CPU使用率达到92%，请及时处理',
-    time: '2分钟前'
-  },
-  {
-    id: 2,
-    title: '网络连接异常',
-    level: 'warning',
-    device: '交换机-03',
-    category: '网络',
-    description: '设备与中心节点连接不稳定',
-    time: '5分钟前'
-  },
-  {
-    id: 3,
-    title: '存储空间不足',
-    level: 'warning',
-    device: '存储服务器-02',
-    category: '存储',
-    description: '磁盘使用率达到85%，建议清理',
-    time: '8分钟前'
-  },
-  {
-    id: 4,
-    title: '新设备接入',
-    level: 'info',
-    device: '监控设备-12',
-    category: '设备',
-    description: '新的监控设备已成功接入系统',
-    time: '15分钟前'
-  },
-  {
-    id: 5,
-    title: '系统更新完成',
-    level: 'info',
-    device: 'Web服务器-01',
-    category: '系统',
-    description: '系统安全更新已完成，运行正常',
-    time: '20分钟前'
-  }
-])
 
 // 加载任务数据
 const loadTaskData = async () => {
@@ -498,23 +432,7 @@ const handleRefreshData = () => {
   ElMessage.success('数据刷新成功')
 }
 
-// 告警相关处理函数
-const handleViewAllAlerts = () => {
-  ElMessage.info('查看全部告警功能开发中')
-}
 
-const handleExportReport = () => {
-  ElMessage.info('导出报告功能开发中')
-}
-
-// 单个告警处理函数
-const handleViewAlert = (alertId: number) => {
-  ElMessage.info(`查看告警详情: ${alertId}`)
-}
-
-const handleProcessAlert = (alertId: number) => {
-  ElMessage.info(`处理告警: ${alertId}`)
-}
 
 const getStatusClass = (status: string) => {
   const statusMap: { [key: string]: string } = {
@@ -526,32 +444,49 @@ const getStatusClass = (status: string) => {
   return statusMap[status] || 'status-default'
 }
 
+// 根据告警级别返回对应的CSS类
+const getAlertLevelClass = (level: string) => {
+  const levelMap: { [key: string]: string } = {
+    '严重告警': 'alert-critical',
+    '警告': 'alert-warning',
+    '一般告警': 'alert-normal'
+  }
+  return levelMap[level] || 'alert-normal'
+}
+
 const initSystemChart = () => {
   if (!systemChart.value) return
   
   chartInstance = echarts.init(systemChart.value)
+  
+  // 生成时间标签
+  const timeLabels = generateTimeLabels()
+  
   const option = {
     grid: {
-      top: 30,
-      left: 50,
-      right: 30,
-      bottom: 30
+      top: 40,
+      left: 60,
+      right: 40,
+      bottom: 40
     },
     xAxis: {
       type: 'category',
-      data: ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11'],
+      data: timeLabels,
       axisLine: {
         lineStyle: { color: '#E5E7EB' }
       },
       axisTick: { show: false },
       axisLabel: {
         color: '#6B7280',
-        fontSize: 12
+        fontSize: 11,
+        interval: 2
       }
     },
     yAxis: {
       type: 'value',
-      max: 50,
+      min: 0,
+      max: 100,
+      interval: 20,
       axisLine: { show: false },
       axisTick: { show: false },
       splitLine: {
@@ -559,16 +494,34 @@ const initSystemChart = () => {
       },
       axisLabel: {
         color: '#6B7280',
-        fontSize: 12
+        fontSize: 11,
+        formatter: '{value}%'
       }
     },
-    series: [
+        series: [
       {
         name: 'CPU使用率',
         type: 'line',
         smooth: true,
-        lineStyle: { color: '#10B981', width: 2 },
-        itemStyle: { color: '#10B981' },
+        lineStyle: { 
+          color: '#10B981', 
+          width: 3 
+        },
+        itemStyle: { 
+          color: '#10B981',
+          borderColor: '#10B981',
+          borderWidth: 2
+        },
+        areaStyle: {
+          color: {
+            type: 'linear',
+            x: 0, y: 0, x2: 0, y2: 1,
+            colorStops: [
+              { offset: 0, color: 'rgba(16, 185, 129, 0.2)' },
+              { offset: 1, color: 'rgba(16, 185, 129, 0.02)' }
+            ]
+          }
+        },
         data: realtimeData.value.cpu,
         animationDuration: 1000,
         animationEasing: 'cubicOut'
@@ -577,21 +530,80 @@ const initSystemChart = () => {
         name: '内存使用率',
         type: 'line',
         smooth: true,
-        lineStyle: { color: '#3B82F6', width: 2 },
-        itemStyle: { color: '#3B82F6' },
+        lineStyle: { 
+          color: '#3B82F6', 
+          width: 3 
+        },
+        itemStyle: { 
+          color: '#3B82F6',
+          borderColor: '#3B82F6',
+          borderWidth: 2
+        },
+        areaStyle: {
+          color: {
+            type: 'linear',
+            x: 0, y: 0, x2: 0, y2: 1,
+            colorStops: [
+              { offset: 0, color: 'rgba(59, 130, 246, 0.2)' },
+              { offset: 1, color: 'rgba(59, 130, 246, 0.02)' }
+            ]
+          }
+        },
         data: realtimeData.value.memory,
         animationDuration: 1000,
         animationEasing: 'cubicOut'
       },
       {
-        name: '硬盘使用率',
+        name: '磁盘使用率',
         type: 'line',
         smooth: true,
-        lineStyle: { color: '#06B6D4', width: 2 },
-        itemStyle: { color: '#06B6D4' },
+        lineStyle: { 
+          color: '#8B5CF6', 
+          width: 3 
+        },
+        itemStyle: { 
+          color: '#8B5CF6',
+          borderColor: '#8B5CF6',
+          borderWidth: 2
+        },
+        areaStyle: {
+          color: {
+            type: 'linear',
+            x: 0, y: 0, x2: 0, y2: 1,
+            colorStops: [
+              { offset: 0, color: 'rgba(139, 92, 246, 0.2)' },
+              { offset: 1, color: 'rgba(139, 92, 246, 0.02)' }
+            ]
+          }
+        },
         data: realtimeData.value.disk,
         animationDuration: 1000,
-        animationEasing: 'cubicOut'
+        animationEasing: 'cubicOut',
+        markPoint: {
+          data: [{
+            coord: [timeLabels.length - 1, realtimeData.value.disk[realtimeData.value.disk.length - 1]],
+            itemStyle: {
+              color: '#8B5CF6',
+              borderColor: '#ffffff',
+              borderWidth: 2
+            },
+            label: {
+              show: true,
+              position: 'top',
+              formatter: (params: any) => {
+                return `${realtimeInfo.value.time}\n${realtimeInfo.value.value}`
+              },
+              backgroundColor: 'rgba(255, 255, 255, 0.9)',
+              borderColor: '#8B5CF6',
+              borderWidth: 1,
+              borderRadius: 4,
+              padding: [4, 8],
+              fontSize: 11,
+              color: '#374151'
+            }
+          }]
+        },
+
       }
     ]
   }
@@ -602,8 +614,16 @@ const initSystemChart = () => {
 }
 
 // 生成随机数据
-const generateRandomData = (baseValue: number, range: number = 10) => {
-  return Math.max(0, Math.min(50, baseValue + (Math.random() - 0.5) * range))
+const generateCpuData = (baseValue: number) => {
+  return Math.max(15, Math.min(25, baseValue + (Math.random() - 0.5) * 6))
+}
+
+const generateMemoryData = (baseValue: number) => {
+  return Math.max(35, Math.min(45, baseValue + (Math.random() - 0.5) * 8))
+}
+
+const generateDiskData = (baseValue: number) => {
+  return Math.max(60, Math.min(68, baseValue + (Math.random() - 0.5) * 6))
 }
 
 // 实时更新数据
@@ -620,16 +640,57 @@ const updateChartData = () => {
   const lastMemoryValue = realtimeData.value.memory[realtimeData.value.memory.length - 1]
   const lastDiskValue = realtimeData.value.disk[realtimeData.value.disk.length - 1]
   
-  realtimeData.value.cpu.push(generateRandomData(lastCpuValue, 8))
-  realtimeData.value.memory.push(generateRandomData(lastMemoryValue, 8))
-  realtimeData.value.disk.push(generateRandomData(lastDiskValue, 6))
+  const newCpuValue = generateCpuData(lastCpuValue)
+  const newMemoryValue = generateMemoryData(lastMemoryValue)
+  const newDiskValue = generateDiskData(lastDiskValue)
+  
+  realtimeData.value.cpu.push(newCpuValue)
+  realtimeData.value.memory.push(newMemoryValue)
+  realtimeData.value.disk.push(newDiskValue)
+  
+  // 更新实时信息显示（以磁盘数据为主）
+  const now = new Date()
+  realtimeInfo.value.time = now.toTimeString().slice(0, 8)
+  realtimeInfo.value.value = Math.round(newDiskValue * 100) / 100
+  
+  // 更新时间标签
+  const timeLabels = generateTimeLabels()
   
   // 更新图表
   chartInstance.setOption({
+    xAxis: {
+      data: timeLabels
+    },
     series: [
       { data: realtimeData.value.cpu },
       { data: realtimeData.value.memory },
-      { data: realtimeData.value.disk }
+      {
+        data: realtimeData.value.disk,
+        markPoint: {
+          data: [{
+            coord: [timeLabels.length - 1, newDiskValue],
+            itemStyle: {
+              color: '#8B5CF6',
+              borderColor: '#ffffff',
+              borderWidth: 2
+            },
+            label: {
+              show: true,
+              position: 'top',
+              formatter: () => {
+                return `${realtimeInfo.value.time}\n${realtimeInfo.value.value}%`
+              },
+              backgroundColor: 'rgba(255, 255, 255, 0.9)',
+              borderColor: '#8B5CF6',
+              borderWidth: 1,
+              borderRadius: 4,
+              padding: [4, 8],
+              fontSize: 11,
+              color: '#374151'
+            }
+          }]
+        }
+      }
     ]
   })
 }
@@ -649,83 +710,122 @@ const stopRealtimeUpdate = () => {
   }
 }
 
-const initAlarmChart = () => {
-  if (!alarmChart.value) return
+// 初始化告警状态图表
+const initAlertStatusChart = () => {
+  if (!alertStatusChart.value) return
   
-  const chart = echarts.init(alarmChart.value)
+  const chart = echarts.init(alertStatusChart.value)
   const option = {
-    series: [{
-      type: 'pie',
-      radius: ['45%', '75%'],
-      center: ['50%', '50%'],
-      data: [
-        { 
-          value: alarmStats.value.critical, 
-          name: '严重告警', 
-          itemStyle: { 
-            color: '#EF4444',
-            shadowBlur: 10,
-            shadowColor: 'rgba(239, 68, 68, 0.5)'
+    tooltip: {
+      trigger: 'item',
+      formatter: '{a} <br/>{b}: {c} ({d}%)'
+    },
+    series: [
+      {
+        name: '告警状态',
+        type: 'pie',
+        radius: ['40%', '70%'],
+        avoidLabelOverlap: false,
+        label: {
+          show: false,
+          position: 'center'
+        },
+        emphasis: {
+          label: {
+            show: true,
+            fontSize: '14',
+            fontWeight: 'bold'
           }
         },
-        { 
-          value: alarmStats.value.warning, 
-          name: '警告告警', 
-          itemStyle: { 
-            color: '#F59E0B',
-            shadowBlur: 10,
-            shadowColor: 'rgba(245, 158, 11, 0.5)'
-          }
+        labelLine: {
+          show: false
         },
-        { 
-          value: alarmStats.value.info, 
-          name: '提示告警', 
-          itemStyle: { 
-            color: '#3B82F6',
-            shadowBlur: 10,
-            shadowColor: 'rgba(59, 130, 246, 0.5)'
+        data: [
+          { 
+            value: 42, 
+            name: '异常告警',
+            itemStyle: { color: '#6366f1' }
+          },
+          { 
+            value: 58, 
+            name: '正常告警',
+            itemStyle: { color: '#10b981' }
           }
-        },
-        { 
-          value: alarmStats.value.resolved, 
-          name: '已解决', 
-          itemStyle: { 
-            color: '#10B981',
-            shadowBlur: 10,
-            shadowColor: 'rgba(16, 185, 129, 0.5)'
-          }
-        }
-      ],
-      label: { 
-        show: false 
-      },
-      labelLine: { 
-        show: false 
-      },
-      emphasis: { 
-        scale: true,
-        scaleSize: 5,
-        itemStyle: {
-          shadowBlur: 20,
-          shadowOffsetX: 0,
-          shadowColor: 'rgba(0, 0, 0, 0.5)'
-        }
-      },
-      animationType: 'scale',
-      animationEasing: 'elasticOut',
-      animationDelay: (idx: number) => Math.random() * 200
-    }]
+        ]
+      }
+    ]
   }
   chart.setOption(option)
 }
 
-// 已移除deviceChart初始化，改为表格形式
+// 初始化告警级别图表
+const initAlertLevelChart = () => {
+  if (!alertLevelChart.value) return
+  
+  const chart = echarts.init(alertLevelChart.value)
+  const option = {
+    tooltip: {
+      trigger: 'item',
+      formatter: '{a} <br/>{b}: {c} ({d}%)'
+    },
+    series: [
+      {
+        name: '告警级别',
+        type: 'pie',
+        radius: ['40%', '70%'],
+        avoidLabelOverlap: false,
+        label: {
+          show: false,
+          position: 'center'
+        },
+        emphasis: {
+          label: {
+            show: true,
+            fontSize: '14',
+            fontWeight: 'bold'
+          }
+        },
+        labelLine: {
+          show: false
+        },
+        data: [
+          { 
+            value: 42, 
+            name: 'CPU告警',
+            itemStyle: { color: '#ff7875' }
+          },
+          { 
+            value: 42, 
+            name: '内存告警',
+            itemStyle: { color: '#ffa940' }
+          },
+          { 
+            value: 16, 
+            name: '磁盘告警',
+            itemStyle: { color: '#52c41a' }
+          }
+        ]
+      }
+    ]
+  }
+  chart.setOption(option)
+}
+
+// 更新告警状态图表
+const updateAlertStatusChart = () => {
+  initAlertStatusChart()
+}
+
+// 更新告警级别图表
+const updateAlertLevelChart = () => {
+  initAlertLevelChart()
+}
 
 onMounted(async () => {
   await nextTick()
   initSystemChart()
-  initAlarmChart()
-  // initDeviceChart() - 已改为表格形式
+  initAlertStatusChart()
+  initAlertLevelChart()
   loadTaskData()
 })
 
@@ -858,12 +958,258 @@ onUnmounted(() => {
     }
   }
 
-  .charts-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+  .alert-section {
+    display: flex;
     gap: 16px;
-  }
-}
+
+    .alert-card {
+      flex: 1;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+      .alert-header {
+        padding: 16px 20px;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        .alert-title {
+          font-size: 16px;
+          font-weight: 600;
+          color: #1f2937;
+          margin: 0;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+
+          .alert-icon {
+            font-size: 14px;
+          }
+          
+          .alert-icon-img {
+            width: 16px;
+            height: 16px;
+            object-fit: contain;
+          }
+        }
+      }
+
+      .alert-content {
+        padding: 20px;
+
+        .alert-charts {
+          display: flex;
+          gap: 16px;
+          margin-bottom: 16px;
+
+          .alert-chart-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+
+            .chart-selector {
+              margin-bottom: 12px;
+              
+              select {
+                padding: 4px 8px;
+                border: 1px solid #d1d5db;
+                border-radius: 4px;
+                font-size: 12px;
+                color: #374151;
+                background: white;
+                cursor: pointer;
+                
+                &:focus {
+                  outline: none;
+                  border-color: #3b82f6;
+                }
+              }
+            }
+
+            .alert-pie-chart {
+              width: 100%;
+              height: 160px;
+              margin-bottom: 16px;
+            }
+
+            .alert-chart-label {
+              font-size: 12px;
+              color: #6b7280;
+            }
+          }
+        }
+
+                 .alert-legends {
+           display: flex;
+           flex-direction: column;
+           gap: 8px;
+           margin-top: 16px;
+
+           .legend-row {
+             display: flex;
+             justify-content: space-between;
+             align-items: center;
+             
+             .legend-item {
+               display: flex;
+               align-items: center;
+               gap: 6px;
+               font-size: 12px;
+               color: #6b7280;
+               
+               .legend-dot {
+                 width: 8px;
+                 height: 8px;
+                 border-radius: 50%;
+               }
+             }
+             
+             .legend-percentage {
+               color: #6b7280;
+               font-size: 12px;
+               font-weight: 500;
+             }
+           }
+         }
+       }
+     }
+
+    .device-alert-card {
+      flex: 1;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+      .device-alert-header {
+        padding: 16px 20px;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        .device-alert-title {
+          font-size: 16px;
+          font-weight: 600;
+          color: #1f2937;
+          margin: 0;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+
+          .device-alert-icon {
+            font-size: 14px;
+          }
+          
+          .device-alert-icon-img {
+            width: 16px;
+            height: 16px;
+            object-fit: contain;
+          }
+        }
+      }
+
+             .device-alert-content {
+         padding: 20px;
+
+         .device-alert-list {
+           display: flex;
+           flex-direction: column;
+           gap: 12px;
+
+           .device-alert-item {
+             background: #f8fafc;
+             border-radius: 8px;
+             padding: 16px;
+             border-left: 4px solid #3b82f6;
+             transition: all 0.3s ease;
+             
+             &:hover {
+               background: #f1f5f9;
+               transform: translateX(2px);
+             }
+             
+                           .alert-type-header {
+                display: flex;
+                gap: 8px;
+                margin-bottom: 12px;
+                
+                .alert-type-badge {
+                  background: #3b82f6;
+                  color: white;
+                  padding: 4px 8px;
+                  border-radius: 4px;
+                  font-size: 10px;
+                  font-weight: 500;
+                }
+                
+                .alert-category-badge {
+                  background: #6366f1;
+                  color: white;
+                  padding: 4px 8px;
+                  border-radius: 4px;
+                  font-size: 10px;
+                  font-weight: 500;
+                }
+                
+                .alert-phase-badge {
+                  padding: 4px 8px;
+                  border-radius: 4px;
+                  font-size: 10px;
+                  font-weight: 500;
+                  color: white;
+                  
+                  &.alert-critical {
+                    background: #ef4444;
+                    animation: pulse 2s infinite;
+                  }
+                  
+                  &.alert-warning {
+                    background: #f59e0b;
+                  }
+                  
+                  &.alert-normal {
+                    background: #10b981;
+                  }
+                }
+              }
+
+                           .alert-details {
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+                
+                .alert-detail-line {
+                  font-size: 12px;
+                  color: #374151;
+                  line-height: 1.5;
+                  padding: 2px 0;
+                  
+                  &:first-child {
+                    font-weight: 600;
+                    color: #1f2937;
+                    font-size: 13px;
+                  }
+                  
+                  &:nth-child(2) {
+                    color: #6b7280;
+                    font-family: 'Courier New', monospace;
+                  }
+                  
+                  &:last-child {
+                    color: #059669;
+                    font-style: italic;
+                  }
+                }
+              }
+           }
+         }
+      }
+    }
+     }
+ }
 
 .chart-card {
   background: white;
@@ -901,24 +1247,49 @@ onUnmounted(() => {
 
   .chart-legend {
     display: flex;
-    gap: 24px;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 16px;
 
-    .legend-item {
+    .legend-items {
       display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      color: #6b7280;
+      gap: 24px;
+      
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: #6b7280;
 
-      .legend-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
+        .legend-dot {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
 
-        &.cpu { background: #10B981; }
-        &.memory { background: #3B82F6; }
-        &.disk { background: #06B6D4; }
+          &.cpu { background: #10B981; }
+          &.memory { background: #3B82F6; }
+          &.disk { background: #8B5CF6; }
+        }
+      }
+    }
+    
+    .legend-realtime-value {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+      
+      .realtime-time {
+        font-size: 11px;
+        color: #6b7280;
+        font-weight: 500;
+      }
+      
+      .realtime-value {
+        font-size: 16px;
+        font-weight: 700;
+        color: #8B5CF6;
       }
     }
   }
@@ -931,215 +1302,9 @@ onUnmounted(() => {
     height: 180px;
     margin-bottom: 16px;
   }
-
-  // 现代化告警信息样式
-  .alarm-chart {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    position: relative;
-    overflow: hidden;
-    
-    &::before {
-      content: '';
-      position: absolute;
-      top: -50%;
-      right: -50%;
-      width: 200%;
-      height: 200%;
-      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-      animation: float 6s ease-in-out infinite;
-    }
-    
-    .chart-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: relative;
-      z-index: 2;
-      
-      .header-left {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        
-        .chart-icon-wrapper {
-          width: 40px;
-          height: 40px;
-          background: rgba(255, 255, 255, 0.2);
-          border-radius: 10px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          backdrop-filter: blur(10px);
-          
-          .chart-icon-img {
-            width: 20px;
-            height: 20px;
-            filter: brightness(0) invert(1);
-          }
-        }
-        
-        .chart-title {
-          color: white;
-          font-size: 18px;
-          font-weight: 600;
-          margin: 0;
-        }
-      }
-      
-      .alert-summary {
-        display: flex;
-        gap: 8px;
-        
-        .alert-count {
-          padding: 6px 12px;
-          border-radius: 20px;
-          font-size: 12px;
-          font-weight: 600;
-          background: rgba(255, 255, 255, 0.2);
-          color: white;
-          backdrop-filter: blur(10px);
-          border: 1px solid rgba(255, 255, 255, 0.3);
-          transition: all 0.3s ease;
-          
-          &:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-2px);
-          }
-        }
-      }
-    }
-    
-    .chart-content {
-      position: relative;
-      z-index: 2;
-    }
-    
-    .alarm-overview {
-      display: grid;
-      grid-template-columns: 200px 1fr;
-      gap: 30px;
-      align-items: center;
-      
-      .alarm-pie-section {
-        position: relative;
-        
-        .pie-chart {
-          position: relative;
-          z-index: 2;
-        }
-        
-        .chart-center-text {
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          text-align: center;
-          z-index: 3;
-          
-          .total-count {
-            font-size: 28px;
-            font-weight: 700;
-            color: white;
-            line-height: 1;
-          }
-          
-          .total-label {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.8);
-            margin-top: 4px;
-          }
-        }
-      }
-      
-      .alarm-details {
-        .alarm-level-item {
-          display: flex;
-          align-items: center;
-          padding: 12px 0;
-          transition: all 0.3s ease;
-          border-radius: 8px;
-          margin-bottom: 8px;
-          
-          &:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: translateX(4px);
-          }
-          
-          .level-indicator {
-            width: 16px;
-            height: 16px;
-            border-radius: 4px;
-            margin-right: 16px;
-            position: relative;
-            
-            &::after {
-              content: '';
-              position: absolute;
-              top: -2px;
-              left: -2px;
-              right: -2px;
-              bottom: -2px;
-              border-radius: 6px;
-              background: rgba(255, 255, 255, 0.2);
-              z-index: -1;
-            }
-          }
-          
-          .level-info {
-            flex: 1;
-            
-            .level-main {
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              margin-bottom: 4px;
-              
-              .level-name {
-                font-size: 14px;
-                font-weight: 500;
-                color: white;
-              }
-              
-              .level-count {
-                font-size: 12px;
-                color: rgba(255, 255, 255, 0.8);
-              }
-            }
-            
-            .level-percentage {
-              font-size: 16px;
-              font-weight: 700;
-              color: white;
-            }
-          }
-          
-          &.critical .level-indicator {
-            background: #EF4444;
-            box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
-          }
-          
-          &.warning .level-indicator {
-            background: #F59E0B;
-            box-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
-          }
-          
-          &.info .level-indicator {
-            background: #3B82F6;
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
-          }
-          
-          &.resolved .level-indicator {
-            background: #10B981;
-            box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
-          }
-        }
-      }
-    }
-  }
 }
-
-.device-table-section {
+ 
+ .device-table-section {
   .table-card {
     background: white;
     border-radius: 8px;
@@ -1304,335 +1469,6 @@ onUnmounted(() => {
       }
     }
   }
-
-  // 现代化实时告警动态样式
-  .device-alert-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    position: relative;
-    overflow: hidden;
-    
-    &::before {
-      content: '';
-      position: absolute;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
-      background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
-      animation: float 8s ease-in-out infinite reverse;
-    }
-    
-    .chart-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: relative;
-      z-index: 2;
-      
-      .header-left {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        
-        .chart-icon-wrapper {
-          width: 40px;
-          height: 40px;
-          background: rgba(255, 255, 255, 0.2);
-          border-radius: 10px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          backdrop-filter: blur(10px);
-          
-          .chart-icon-img {
-            width: 20px;
-            height: 20px;
-            filter: brightness(0) invert(1);
-          }
-        }
-        
-        .chart-title {
-          color: white;
-          font-size: 18px;
-          font-weight: 600;
-          margin: 0;
-        }
-      }
-      
-      .refresh-indicator {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        background: rgba(255, 255, 255, 0.1);
-        padding: 8px 12px;
-        border-radius: 20px;
-        backdrop-filter: blur(10px);
-        
-        .refresh-dot {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          background: #10B981;
-          animation: pulse 2s infinite;
-          box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
-        }
-        
-        .refresh-text {
-          font-size: 12px;
-          color: rgba(255, 255, 255, 0.9);
-          font-weight: 500;
-        }
-      }
-    }
-    
-    .device-alert-content {
-      padding: 20px;
-      position: relative;
-      z-index: 2;
-      
-      .alert-list {
-        max-height: 320px;
-        overflow-y: auto;
-        padding-right: 8px;
-        
-        &::-webkit-scrollbar {
-          width: 6px;
-        }
-        
-        &::-webkit-scrollbar-track {
-          background: rgba(255, 255, 255, 0.1);
-          border-radius: 3px;
-        }
-        
-        &::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.3);
-          border-radius: 3px;
-          
-          &:hover {
-            background: rgba(255, 255, 255, 0.5);
-          }
-        }
-        
-        .alert-item {
-          display: flex;
-          align-items: flex-start;
-          gap: 12px;
-          margin-bottom: 16px;
-          padding: 16px;
-          background: rgba(255, 255, 255, 0.1);
-          border-radius: 12px;
-          backdrop-filter: blur(10px);
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          transition: all 0.3s ease;
-          
-          &:hover {
-            background: rgba(255, 255, 255, 0.15);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-          }
-          
-          .alert-left {
-            flex: 1;
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            
-            .alert-status-dot {
-              width: 12px;
-              height: 12px;
-              border-radius: 50%;
-              margin-top: 6px;
-              position: relative;
-              flex-shrink: 0;
-              
-              &::after {
-                content: '';
-                position: absolute;
-                top: -4px;
-                left: -4px;
-                right: -4px;
-                bottom: -4px;
-                border-radius: 50%;
-                background: rgba(255, 255, 255, 0.2);
-                z-index: -1;
-              }
-            }
-            
-            .alert-info {
-              flex: 1;
-              
-              .alert-title {
-                font-weight: 600;
-                font-size: 15px;
-                color: white;
-                line-height: 1.4;
-                margin-bottom: 8px;
-              }
-              
-              .alert-meta {
-                display: flex;
-                justify-content: flex-start;
-                align-items: center;
-                gap: 12px;
-                margin-bottom: 8px;
-                
-                .alert-device {
-                  display: flex;
-                  align-items: center;
-                  gap: 6px;
-                  font-size: 12px;
-                  color: rgba(255, 255, 255, 0.8);
-                  background: rgba(255, 255, 255, 0.1);
-                  padding: 4px 8px;
-                  border-radius: 12px;
-                  
-                  .device-icon {
-                    font-size: 12px;
-                  }
-                }
-                
-                .alert-category-badge {
-                  padding: 4px 8px;
-                  border-radius: 12px;
-                  font-size: 10px;
-                  font-weight: 600;
-                  text-transform: uppercase;
-                  letter-spacing: 0.5px;
-                  background: rgba(255, 255, 255, 0.2);
-                  color: white;
-                  
-                  &.category-系统 {
-                    background: rgba(59, 130, 246, 0.3);
-                  }
-                  
-                  &.category-网络 {
-                    background: rgba(245, 158, 11, 0.3);
-                  }
-                  
-                  &.category-存储 {
-                    background: rgba(139, 92, 246, 0.3);
-                  }
-                  
-                  &.category-设备 {
-                    background: rgba(16, 185, 129, 0.3);
-                  }
-                }
-              }
-              
-              .alert-description {
-                font-size: 13px;
-                color: rgba(255, 255, 255, 0.8);
-                line-height: 1.5;
-              }
-            }
-          }
-          
-          .alert-right {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 8px;
-            
-            .alert-time {
-              font-size: 11px;
-              color: rgba(255, 255, 255, 0.7);
-              white-space: nowrap;
-              background: rgba(255, 255, 255, 0.1);
-              padding: 2px 8px;
-              border-radius: 8px;
-            }
-            
-            .alert-actions {
-              display: flex;
-              gap: 4px;
-              
-              .action-btn {
-                width: 28px;
-                height: 28px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                border-radius: 6px;
-                border: none;
-                background: rgba(255, 255, 255, 0.2);
-                color: white;
-                cursor: pointer;
-                transition: all 0.2s ease;
-                
-                &:hover {
-                  background: rgba(255, 255, 255, 0.3);
-                  transform: scale(1.1);
-                }
-                
-                .icon {
-                  font-size: 12px;
-                }
-              }
-            }
-          }
-          
-          &.level-critical {
-            .alert-left .alert-status-dot {
-              background: #EF4444;
-              box-shadow: 0 0 15px rgba(239, 68, 68, 0.6);
-              animation: criticalPulse 2s infinite;
-            }
-          }
-          
-          &.level-warning {
-            .alert-left .alert-status-dot {
-              background: #F59E0B;
-              box-shadow: 0 0 15px rgba(245, 158, 11, 0.6);
-            }
-          }
-          
-          &.level-info {
-            .alert-left .alert-status-dot {
-              background: #3B82F6;
-              box-shadow: 0 0 15px rgba(59, 130, 246, 0.6);
-            }
-          }
-        }
-      }
-      
-      .alert-footer {
-        display: flex;
-        gap: 12px;
-        margin-top: 20px;
-        padding-top: 20px;
-        border-top: 1px solid rgba(255, 255, 255, 0.2);
-        
-        .footer-btn {
-          flex: 1;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          padding: 12px 16px;
-          border-radius: 8px;
-          border: none;
-          font-size: 13px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          background: rgba(255, 255, 255, 0.1);
-          color: white;
-          backdrop-filter: blur(10px);
-          
-          &:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-          }
-          
-          .btn-icon {
-            font-size: 14px;
-          }
-        }
-      }
-    }
-  }
 }
 
 // 响应式设计
@@ -1646,9 +1482,9 @@ onUnmounted(() => {
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-
-  .charts-row {
-    grid-template-columns: 1fr;
+  
+  .alert-section {
+    flex-direction: column;
   }
 }
 
@@ -1665,6 +1501,10 @@ onUnmounted(() => {
     flex-direction: column;
     gap: 12px;
     align-items: flex-start;
+  }
+  
+  .alert-section {
+    flex-direction: column;
   }
 }
 

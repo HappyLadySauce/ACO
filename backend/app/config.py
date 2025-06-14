@@ -3,7 +3,7 @@ from typing import Optional, List
 
 class Settings(BaseSettings):
     # 数据库配置
-    DATABASE_URL: str = "mysql+pymysql://user:ChinaSkills!@localhost:3306/conlse_sql?charset=utf8mb4"
+    DATABASE_URL: str = "mysql+pymysql://root:ChinaSkills!@localhost:3306/conlse_sql?charset=utf8mb4"
     
     # JWT配置
     SECRET_KEY: str = "your-secret-key-here-multi-agent-ops-system-2024"

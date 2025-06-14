@@ -3,7 +3,7 @@
     <el-card>
       <template #header>
         <div class="card-header">
-          <span>任务进度</span>
+          <span>{{ authStore.isAdmin ? '全部任务进度' : '我的任务进度' }}</span>
           <div class="header-actions">
             <el-button @click="refreshData">
               <el-icon><Refresh /></el-icon>
@@ -292,7 +292,9 @@ import {
   TrendCharts 
 } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
-import { getMyTasks, getMyTaskStats, updateMyTask, getTasks } from '@/api/task'
+import { getMyTasks, getMyTaskStats, updateMyTask, getTaskAssignments } from '@/api/task'
+import { getTaskAssignmentStats } from '@/api/taskAssignment'
+import { useAuthStore } from '@/store/modules/auth'
 
 interface TaskProgress {
   id: number
@@ -315,6 +317,7 @@ interface Stats {
   avgProgress: number
 }
 
+const authStore = useAuthStore()
 const loading = ref(false)
 const detailDialogVisible = ref(false)
 const updateDialogVisible = ref(false)
@@ -384,36 +387,40 @@ const getStatusType = (status: string) => {
 const loadProgressData = async () => {
   loading.value = true
   try {
-    // 获取我的任务分配
-    const myTasksResponse = await getMyTasks({
-      status: searchForm.status || undefined
-    })
+    let tasksResponse
     
-    // 获取所有任务信息用于匹配任务名称和类型
-    const allTasksResponse = await getTasks()
-    const taskMap = new Map()
-    allTasksResponse.data?.forEach(task => {
-      taskMap.set(task.id, task)
-    })
+    // 根据用户角色决定调用哪个API
+    if (authStore.isAdmin) {
+      // 管理员获取所有任务分配
+      tasksResponse = await getTaskAssignments({
+        status: searchForm.status || undefined,
+        skip: (pagination.currentPage - 1) * pagination.pageSize,
+        limit: pagination.pageSize
+      })
+    } else {
+      // 普通用户获取个人任务
+      tasksResponse = await getMyTasks({
+        status: searchForm.status || undefined
+      })
+    }
     
-    // 转换数据格式并匹配任务详细信息
-    progressList.value = myTasksResponse.data?.map(item => {
-      const taskInfo = taskMap.get(item.task_id)
-      return {
-        id: item.id,
-        task_id: item.task_id,
-        task_name: taskInfo?.name || `任务 ${item.task_id}`,
-        task_type: taskInfo?.type || '未知类型',
-        username: item.username,
-        status: item.status,
-        progress: item.progress,
-        performance_score: item.performance_score,
-        comments: item.comments || '',
-        assigned_at: item.assigned_at,
-        last_update: item.last_update
-      }
-    }) || []
+    // 直接使用后端返回的数据，无需复杂映射
+    progressList.value = tasksResponse.data?.map(item => ({
+      id: item.id,
+      task_id: item.task_id,
+      task_name: item.task_name || `任务 ${item.task_id}`,
+      task_type: item.task_type || '未知类型',
+      username: item.username,
+      status: item.status,
+      progress: item.progress,
+      performance_score: item.performance_score,
+      comments: item.comments || '',
+      assigned_at: item.assigned_at,
+      last_update: item.last_update
+    })) || []
     
+    // 如果是普通用户，直接使用数据长度作为总数
+    // 如果是管理员，需要单独获取总数（这里简化处理）
     pagination.total = progressList.value.length
     
     // 计算统计数据
@@ -421,17 +428,32 @@ const loadProgressData = async () => {
     
     // 获取统计数据
     try {
-      const statsResponse = await getMyTaskStats()
-      if (statsResponse.data) {
-        stats.value = {
-          total: statsResponse.data.total_tasks,
-          inProgress: statsResponse.data.in_progress_tasks,
-          completed: statsResponse.data.completed_tasks,
-          avgProgress: Math.round((statsResponse.data.average_score || 0) * 20) // 转换为百分比
+      if (authStore.isAdmin) {
+        // 管理员获取全部任务分配统计
+        const statsResponse = await getTaskAssignmentStats()
+        if (statsResponse.data) {
+          stats.value = {
+            total: statsResponse.data.total_assignments,
+            inProgress: statsResponse.data.in_progress,
+            completed: statsResponse.data.completed,
+            avgProgress: Math.round(statsResponse.data.avg_progress || 0)
+          }
+        }
+      } else {
+        // 普通用户获取个人任务统计
+        const statsResponse = await getMyTaskStats()
+        if (statsResponse.data) {
+          stats.value = {
+            total: statsResponse.data.total_tasks,
+            inProgress: statsResponse.data.in_progress_tasks,
+            completed: statsResponse.data.completed_tasks,
+            avgProgress: Math.round((statsResponse.data.average_score || 0) * 20) // 转换为百分比
+          }
         }
       }
     } catch (statsError) {
       console.warn('获取统计数据失败:', statsError)
+      // 如果统计API失败，使用计算的统计数据
     }
   } catch (error) {
     ElMessage.error('加载任务进度数据失败')

@@ -4,6 +4,7 @@ export interface Task {
   name: string
   type: string
   phase: string
+  status: string
   description: string
   create_time: string
   update_time: string
@@ -21,15 +22,18 @@ export interface TaskForm {
 export interface TaskAssignment {
   id: number
   task_id: number
-  task_name: string
-  task_type: string
+  user_id?: number
   username: string
   status: string
   progress: number
   performance_score: number
-  comments: string
+  comments?: string
   assigned_at: string
   last_update: string
+  // 任务信息
+  task_name?: string
+  task_type?: string
+  task_phase?: string
 }
 
 // 任务分配表单类型

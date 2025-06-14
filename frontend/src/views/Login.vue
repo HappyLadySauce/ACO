@@ -185,14 +185,13 @@
                   class="login-button"
                   @click="handleLogin"
                 >
-                  <span v-if="!loading">
+                  <template v-if="!loading">
                     <el-icon><Right /></el-icon>
                     登录系统
-                  </span>
-                  <span v-else>
-                    <el-icon class="is-loading"><Loading /></el-icon>
+                  </template>
+                  <template v-else>
                     登录中...
-                  </span>
+                  </template>
                 </el-button>
               </el-form-item>
             </el-form>
@@ -210,7 +209,7 @@ import { ref, reactive, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { 
-  Monitor, User, UserFilled, Lock, Right, Check, InfoFilled, Loading,
+  Monitor, User, UserFilled, Lock, Right, Check, InfoFilled,
   Setting, DataAnalysis, Connection 
 } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/store/modules/auth'
@@ -1068,20 +1067,9 @@ const handleLogin = async () => {
     
     .el-icon {
       margin-right: 8px;
-      
-      &.is-loading {
-        animation: spin 1s linear infinite;
-      }
     }
   }
 }
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-
 
 // 响应式设计
 @media (max-width: 1200px) {

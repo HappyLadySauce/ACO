@@ -110,7 +110,13 @@
 
     <!-- 模板卡片网格 -->
     <div class="image-grid">
-      <div v-for="(image, index) in filteredImageList" :key="index" class="image-card" :class="{ 'selected': selectedItems.includes(index) }">
+      <div v-for="(image, index) in filteredImageList" :key="index" 
+           class="image-card" 
+           :class="{ 
+             'selected': selectedItems.includes(index),
+             'enabled': image.isEnabled,
+             'disabled': !image.isEnabled
+           }">
         <!-- 选择checkbox -->
         <div class="card-checkbox">
           <el-checkbox v-model="selectedItems" :label="index" @change="handleSelectItem"></el-checkbox>
@@ -153,12 +159,6 @@
             <div class="system-details">
               <div class="os-name">{{ getOSDisplayName(image.system) }}</div>
               <div class="os-arch">{{ getOSArch(image.system) }}</div>
-            </div>
-            <div class="status-indicator">
-              <div 
-                class="status-dot" 
-                :class="image.isEnabled ? 'status-active' : 'status-inactive'"
-              ></div>
             </div>
           </div>
           
@@ -207,7 +207,7 @@ const selectedItems = ref([])
 // 模板数据
 const imageList = reactive([
   {
-    name: '管理员角色',
+    name: '网络工程师',
     system: 'windows10 64bit',
     systemDisplayName: 'Windows 10',
     systemDiskUsage: '15.2GB/120.0GB',
@@ -221,7 +221,7 @@ const imageList = reactive([
     imageGroup: 'windows'
   },
   {
-    name: '教师角色',
+    name: '系统架构师',
     system: 'windows10 64bit',
     systemDisplayName: 'Windows 10',
     systemDiskUsage: '12.8GB/120.0GB',
@@ -235,31 +235,31 @@ const imageList = reactive([
     imageGroup: 'windows'
   },
   {
-    name: '学生角色',
+    name: '系统规划与管理师',
     system: 'windows11 64bit',
     systemDisplayName: 'Windows 11',
     systemDiskUsage: '18.5GB/120.0GB',
     dataDiskUsage: '22.1GB/50.0GB',
     createTime: '2024-01-17 11:00:58',
     updateTime: '2024-01-23 09:30:27',
-    isEnabled: false,
-    status: 'stopped',
+    isEnabled: true,
+    status: 'running',
     topic: 'education',
     management: 'user',
     imageGroup: 'windows'
   },
   {
-    name: '访客角色',
+    name: '系统分析师',
     system: 'windows11 64bit',
     systemDisplayName: 'Windows 11',
     systemDiskUsage: '10.3GB/120.0GB',
     dataDiskUsage: '5.8GB/50.0GB',
     createTime: '2024-01-18 14:20:41',
     updateTime: '2024-01-24 11:15:06',
-    isEnabled: false,
-    status: 'stopped',
+    isEnabled: true,
+    status: 'running',
     topic: 'office',
-    management: 'guest',
+    management: 'admin',
     imageGroup: 'windows'
   },
   {
@@ -270,8 +270,8 @@ const imageList = reactive([
     dataDiskUsage: '35.4GB/100.0GB',
     createTime: '2024-01-19 15:45:29',
     updateTime: '2024-01-25 13:20:18',
-    isEnabled: true,
-    status: 'running',
+    isEnabled: false,
+    status: 'stopped',
     topic: 'dev',
     management: 'admin',
     imageGroup: 'windows'
@@ -284,8 +284,8 @@ const imageList = reactive([
     dataDiskUsage: '18.7GB/50.0GB',
     createTime: '2024-01-20 08:30:52',
     updateTime: '2024-01-26 10:40:35',
-    isEnabled: true,
-    status: 'running',
+    isEnabled: false,
+    status: 'stopped',
     topic: 'test',
     management: 'user',
     imageGroup: 'windows'
@@ -312,8 +312,8 @@ const imageList = reactive([
     dataDiskUsage: '25.3GB/100.0GB',
     createTime: '2024-01-22 16:30:07',
     updateTime: '2024-01-28 09:25:53',
-    isEnabled: true,
-    status: 'error',
+    isEnabled: false,
+    status: 'stopped',
     topic: 'office',
     management: 'admin',
     imageGroup: 'linux'
@@ -664,18 +664,33 @@ const getOSLogoClass = (system) => {
 }
 
 .image-card {
-  background: linear-gradient(135deg, #4a90e2 0%, #357abd 50%, #1e5f99 100%);
   border-radius: 12px;
   box-shadow: 0 8px 25px rgba(74, 144, 226, 0.3);
   overflow: hidden;
-  transition: transform 0.3s, box-shadow 0.3s;
+  transition: transform 0.3s, box-shadow 0.3s, background 0.3s;
   color: white;
   position: relative;
 }
 
+.image-card.enabled {
+  background: linear-gradient(135deg, #4a90e2 0%, #357abd 50%, #1e5f99 100%);
+}
+
+.image-card.disabled {
+  background: linear-gradient(135deg, #8c8c8c 0%, #666666 50%, #404040 100%);
+  opacity: 0.7;
+}
+
 .image-card:hover {
   transform: translateY(-4px);
+}
+
+.image-card.enabled:hover {
   box-shadow: 0 12px 35px rgba(74, 144, 226, 0.4);
+}
+
+.image-card.disabled:hover {
+  box-shadow: 0 12px 35px rgba(140, 140, 140, 0.4);
 }
 
 /* 卡片头部 */
@@ -746,7 +761,6 @@ const getOSLogoClass = (system) => {
   align-items: center;
   gap: 12px;
   min-width: 120px;
-  position: relative;
 }
 
 .system-icon {
@@ -790,29 +804,6 @@ const getOSLogoClass = (system) => {
 .os-arch {
   font-size: 12px;
   color: rgba(255, 255, 255, 0.8);
-}
-
-/* 状态指示器 */
-.status-indicator {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-}
-
-.status-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  border: 2px solid white;
-}
-
-.status-active {
-  background: #52c41a;
-  box-shadow: 0 0 10px rgba(82, 196, 26, 0.6);
-}
-
-.status-inactive {
-  background: #999;
 }
 
 /* 右侧详细信息 */

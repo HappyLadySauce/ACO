@@ -75,8 +75,8 @@
       <div class="chart-card system-chart">
         <div class="chart-header">
           <h3 class="chart-title">
-            <img src="@/assets/icon/组 3000.png" alt="系统对比" class="chart-icon-img" />
-            系统综合对比控制
+            <img src="@/assets/icon/组 3000.png" alt="系统监控" class="chart-icon-img" />
+            系统资源实时监控
           </h3>
         </div>
         <div class="chart-content">
@@ -106,7 +106,7 @@
               <img src="@/assets/icon/组 3261.png" alt="告警信息" class="chart-icon-img" />
               告警信息
             </h3>
-        </div>
+          </div>
           <div class="chart-content">
             <div ref="alarmChart" class="pie-chart"></div>
             <div class="chart-stats">
@@ -119,10 +119,10 @@
                 <span class="stat-color stat-green"></span>
                 <span class="stat-text">日常养护</span>
                 <span class="stat-value">42%</span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
         <div class="chart-card device-chart">
           <div class="chart-header">
@@ -130,7 +130,7 @@
               <img src="@/assets/icon/组 3262.png" alt="设备告警" class="chart-icon-img" />
               设备告警
             </h3>
-        </div>
+          </div>
           <div class="chart-content">
             <div ref="deviceChart" class="pie-chart"></div>
             <div class="chart-stats">
@@ -153,15 +153,15 @@
           </div>
         </div>
       </div>
-        </div>
+    </div>
 
     <!-- 设备信息表格 -->
     <div class="device-table-section">
       <div class="table-card">
         <div class="table-header">
           <h3 class="table-title">
-            <img src="@/assets/icon/设备.png" alt="设备信息" class="table-icon-img" />
-            设备信息
+            <img src="@/assets/icon/设备.png" alt="任务信息" class="table-icon-img" />
+            任务信息
           </h3>
           <div class="table-actions">
             <button class="action-btn create-btn">
@@ -218,7 +218,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import * as echarts from 'echarts'
 
 interface DeviceInfo {
@@ -234,6 +234,16 @@ interface DeviceInfo {
 const systemChart = ref<HTMLElement>()
 const alarmChart = ref<HTMLElement>()
 const deviceChart = ref<HTMLElement>()
+
+// 实时数据
+const realtimeData = ref({
+  cpu: [15, 12, 18, 25, 28, 32, 24, 20, 16, 18, 22],
+  memory: [32, 28, 25, 15, 35, 42, 38, 25, 22, 18, 25],
+  disk: [45, 42, 35, 30, 28, 25, 30, 35, 40, 38, 42]
+})
+
+let chartInstance: any = null
+let animationTimer: any = null
 
 const deviceList = ref<DeviceInfo[]>([
   {
@@ -278,7 +288,7 @@ const getStatusClass = (status: string) => {
 const initSystemChart = () => {
   if (!systemChart.value) return
   
-  const chart = echarts.init(systemChart.value)
+  chartInstance = echarts.init(systemChart.value)
   const option = {
     grid: {
       top: 30,
@@ -318,7 +328,9 @@ const initSystemChart = () => {
         smooth: true,
         lineStyle: { color: '#10B981', width: 2 },
         itemStyle: { color: '#10B981' },
-        data: [15, 12, 18, 25, 28, 32, 24, 20, 16, 18, 22]
+        data: realtimeData.value.cpu,
+        animationDuration: 1000,
+        animationEasing: 'cubicOut'
       },
       {
         name: '内存使用率',
@@ -326,7 +338,9 @@ const initSystemChart = () => {
         smooth: true,
         lineStyle: { color: '#3B82F6', width: 2 },
         itemStyle: { color: '#3B82F6' },
-        data: [32, 28, 25, 15, 35, 42, 38, 25, 22, 18, 25]
+        data: realtimeData.value.memory,
+        animationDuration: 1000,
+        animationEasing: 'cubicOut'
       },
       {
         name: '硬盘使用率',
@@ -334,11 +348,64 @@ const initSystemChart = () => {
         smooth: true,
         lineStyle: { color: '#06B6D4', width: 2 },
         itemStyle: { color: '#06B6D4' },
-        data: [45, 42, 35, 30, 28, 25, 30, 35, 40, 38, 42]
+        data: realtimeData.value.disk,
+        animationDuration: 1000,
+        animationEasing: 'cubicOut'
       }
     ]
   }
-  chart.setOption(option)
+  chartInstance.setOption(option)
+  
+  // 启动实时更新
+  startRealtimeUpdate()
+}
+
+// 生成随机数据
+const generateRandomData = (baseValue: number, range: number = 10) => {
+  return Math.max(0, Math.min(50, baseValue + (Math.random() - 0.5) * range))
+}
+
+// 实时更新数据
+const updateChartData = () => {
+  if (!chartInstance) return
+  
+  // 移除第一个数据点，添加新的数据点
+  realtimeData.value.cpu.shift()
+  realtimeData.value.memory.shift()
+  realtimeData.value.disk.shift()
+  
+  // 生成新的随机数据
+  const lastCpuValue = realtimeData.value.cpu[realtimeData.value.cpu.length - 1]
+  const lastMemoryValue = realtimeData.value.memory[realtimeData.value.memory.length - 1]
+  const lastDiskValue = realtimeData.value.disk[realtimeData.value.disk.length - 1]
+  
+  realtimeData.value.cpu.push(generateRandomData(lastCpuValue, 8))
+  realtimeData.value.memory.push(generateRandomData(lastMemoryValue, 8))
+  realtimeData.value.disk.push(generateRandomData(lastDiskValue, 6))
+  
+  // 更新图表
+  chartInstance.setOption({
+    series: [
+      { data: realtimeData.value.cpu },
+      { data: realtimeData.value.memory },
+      { data: realtimeData.value.disk }
+    ]
+  })
+}
+
+// 启动实时更新
+const startRealtimeUpdate = () => {
+  animationTimer = setInterval(() => {
+    updateChartData()
+  }, 2000) // 每2秒更新一次
+}
+
+// 停止实时更新
+const stopRealtimeUpdate = () => {
+  if (animationTimer) {
+    clearInterval(animationTimer)
+    animationTimer = null
+  }
 }
 
 const initAlarmChart = () => {
@@ -388,6 +455,15 @@ onMounted(async () => {
   initAlarmChart()
   initDeviceChart()
 })
+
+// 组件卸载时清理定时器
+onUnmounted(() => {
+  stopRealtimeUpdate()
+  if (chartInstance) {
+    chartInstance.dispose()
+    chartInstance = null
+  }
+})
 </script>
 
 <style scoped lang="scss">
@@ -397,16 +473,14 @@ onMounted(async () => {
   min-height: 100vh;
 }
 
-
-
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   gap: 16px;
   margin-bottom: 24px;
 
-.stat-card {
-  background: white;
+  .stat-card {
+    background: white;
     border-radius: 8px;
     padding: 20px;
     display: flex;
@@ -467,7 +541,7 @@ onMounted(async () => {
 
       .stat-number {
         font-size: 18px;
-      font-weight: 600;
+        font-weight: 600;
         color: #1f2937;
         margin-bottom: 4px;
       }
@@ -485,10 +559,34 @@ onMounted(async () => {
 
   .system-chart {
     margin-bottom: 16px;
+    position: relative;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #10B981, #3B82F6, #06B6D4);
+      border-radius: 8px 8px 0 0;
+      animation: monitoring-pulse 3s ease-in-out infinite;
+    }
+    
+    .chart-title {
+      position: relative;
+      
+      &::after {
+        content: '●';
+        color: #10B981;
+        margin-left: 8px;
+        animation: blink 2s ease-in-out infinite;
+      }
+    }
   }
 
   .charts-row {
-  display: grid;
+    display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 16px;
   }
@@ -508,8 +606,8 @@ onMounted(async () => {
       font-weight: 600;
       color: #1f2937;
       margin: 0;
-    display: flex;
-    align-items: center;
+      display: flex;
+      align-items: center;
       gap: 8px;
 
       .chart-icon {
@@ -535,9 +633,9 @@ onMounted(async () => {
 
     .legend-item {
       display: flex;
-    align-items: center;
+      align-items: center;
       gap: 6px;
-        font-size: 12px;
+      font-size: 12px;
       color: #6b7280;
 
       .legend-dot {
@@ -713,7 +811,7 @@ onMounted(async () => {
 
         td {
           padding: 12px 16px;
-      font-size: 12px;
+          font-size: 12px;
           color: #6b7280;
           border-bottom: 1px solid #f3f4f6;
           white-space: nowrap;
@@ -723,7 +821,7 @@ onMounted(async () => {
           padding: 2px 8px;
           border-radius: 12px;
           font-size: 11px;
-      font-weight: 500;
+          font-weight: 500;
 
           &.status-unassigned {
             background: #fef2f2;
@@ -780,6 +878,27 @@ onMounted(async () => {
     flex-direction: column;
     gap: 12px;
     align-items: flex-start;
+  }
+}
+
+// 实时监控动画
+@keyframes monitoring-pulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scaleX(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleX(1.02);
+  }
+}
+
+@keyframes blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
   }
 }
 </style> 

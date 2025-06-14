@@ -1,490 +1,494 @@
 <template>
   <div class="desktop-management">
-    <el-card>
-      <template #header>
-        <div class="card-header">
-          <span>桌面管理</span>
-          <el-button type="primary" @click="handleAdd">
-            <el-icon><Plus /></el-icon>
-            新增桌面项目
-          </el-button>
+    <!-- 页面标题 -->
+    <div class="page-header">
+      <h1 class="page-title">模板｜任务下发列表</h1>
+    </div>
+
+    <!-- 筛选条件栏 -->
+    <div class="filter-bar">
+      <div class="filter-group">
+        <!-- 话题分组 -->
+        <div class="filter-item">
+          <span class="filter-label">话题分组：</span>
+          <el-select v-model="selectedTopic" placeholder="全部分组" class="filter-select">
+            <el-option label="全部分组" value="all"></el-option>
+            <el-option label="办公应用" value="office"></el-option>
+            <el-option label="开发工具" value="dev"></el-option>
+          </el-select>
         </div>
-      </template>
 
-      <!-- 工具栏 -->
-      <div class="toolbar">
-        <el-row :gutter="20">
-          <el-col :span="8">
-            <el-card class="tool-card">
-              <h3>快捷工具</h3>
-              <div class="tool-grid">
-                            <div class="tool-item" @click="openCalculator">
-              <el-icon><Operation /></el-icon>
-              <span>计算器</span>
-            </div>
-                <div class="tool-item" @click="openNotepad">
-                  <el-icon><Edit /></el-icon>
-                  <span>记事本</span>
-                </div>
-                <div class="tool-item" @click="openTerminal">
-                  <el-icon><Monitor /></el-icon>
-                  <span>终端</span>
-                </div>
-                <div class="tool-item" @click="openFileManager">
-                  <el-icon><Folder /></el-icon>
-                  <span>文件管理</span>
-                </div>
-              </div>
-            </el-card>
-          </el-col>
-          
-          <el-col :span="8">
-            <el-card class="tool-card">
-              <h3>系统信息</h3>
-              <div class="system-info">
-                <div class="info-item">
-                  <span class="label">CPU使用率:</span>
-                  <el-progress :percentage="systemInfo.cpuUsage" />
-                </div>
-                <div class="info-item">
-                  <span class="label">内存使用率:</span>
-                  <el-progress :percentage="systemInfo.memoryUsage" />
-                </div>
-                <div class="info-item">
-                  <span class="label">磁盘使用率:</span>
-                  <el-progress :percentage="systemInfo.diskUsage" />
-                </div>
-              </div>
-            </el-card>
-          </el-col>
-          
-          <el-col :span="8">
-            <el-card class="tool-card">
-              <h3>最近访问</h3>
-              <div class="recent-list">
-                <div 
-                  v-for="item in recentItems" 
-                  :key="item.id"
-                  class="recent-item"
-                  @click="openRecentItem(item)"
-                >
-                  <el-icon><Document /></el-icon>
-                  <span>{{ item.name }}</span>
-                  <small>{{ item.time }}</small>
-                </div>
-              </div>
-            </el-card>
-          </el-col>
-        </el-row>
-      </div>
-
-      <!-- 桌面项目列表 -->
-      <div class="desktop-items">
-        <h3>桌面项目管理</h3>
-        <el-table :data="desktopItems" v-loading="loading" style="width: 100%">
-          <el-table-column prop="id" label="ID" width="80" />
-          <el-table-column prop="name" label="项目名称" />
-          <el-table-column prop="type" label="类型">
-            <template #default="scope">
-              <el-tag>{{ scope.row.type }}</el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="path" label="路径" show-overflow-tooltip />
-          <el-table-column prop="status" label="状态">
-            <template #default="scope">
-              <el-tag :type="scope.row.status === 'active' ? 'success' : 'info'">
-                {{ scope.row.status === 'active' ? '激活' : '未激活' }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="created_at" label="创建时间" />
-          <el-table-column label="操作" width="200">
-            <template #default="scope">
-              <el-button size="small" @click="handleEdit(scope.row)">
-                编辑
-              </el-button>
-              <el-button 
-                size="small" 
-                type="danger" 
-                @click="handleDelete(scope.row)"
-              >
-                删除
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
-    </el-card>
-
-    <!-- 桌面项目编辑对话框 -->
-    <el-dialog
-      v-model="dialogVisible"
-      :title="isEdit ? '编辑桌面项目' : '新增桌面项目'"
-      width="600px"
-    >
-      <el-form
-        ref="formRef"
-        :model="itemForm"
-        :rules="rules"
-        label-width="100px"
-      >
-        <el-form-item label="项目名称" prop="name">
-          <el-input v-model="itemForm.name" placeholder="请输入项目名称" />
-        </el-form-item>
-        <el-form-item label="类型" prop="type">
-          <el-select v-model="itemForm.type" placeholder="选择类型">
-            <el-option label="应用程序" value="application" />
-            <el-option label="文件夹" value="folder" />
-            <el-option label="文件" value="file" />
-            <el-option label="链接" value="link" />
+        <!-- 最高管理 -->
+        <div class="filter-item">
+          <span class="filter-label">最高管理</span>
+          <el-select v-model="selectedManagement" placeholder="选择管理" class="filter-select">
+            <el-option label="管理员" value="admin"></el-option>
+            <el-option label="普通用户" value="user"></el-option>
           </el-select>
-        </el-form-item>
-        <el-form-item label="路径" prop="path">
-          <el-input v-model="itemForm.path" placeholder="请输入文件路径" />
-        </el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-select v-model="itemForm.status" placeholder="选择状态">
-            <el-option label="激活" value="active" />
-            <el-option label="未激活" value="inactive" />
+        </div>
+
+        <!-- 模板统计 -->
+        <div class="filter-item">
+          <span class="filter-label">11个模板：</span>
+          <div class="image-stats">
+            <span class="stat-item stat-blue">🔵 0个</span>
+            <span class="stat-item stat-black">⚫ 11个</span>
+            <span class="stat-item stat-red">🔴 0个</span>
+          </div>
+        </div>
+
+        <!-- 模板分组 -->
+        <div class="filter-item">
+          <span class="filter-label">模板分组</span>
+          <el-select v-model="selectedImageGroup" placeholder="选择分组" class="filter-select">
+            <el-option label="Windows系统" value="windows"></el-option>
+            <el-option label="Linux系统" value="linux"></el-option>
           </el-select>
-        </el-form-item>
-        <el-form-item label="描述" prop="description">
-          <el-input 
-            v-model="itemForm.description" 
-            type="textarea"
-            :rows="3"
-            placeholder="请输入描述" 
+        </div>
+
+        <!-- 内置充值使模块 -->
+        <div class="filter-item">
+          <el-radio-group v-model="chargeModule" class="charge-module">
+            <el-radio :label="true" size="small">内置充值使模块</el-radio>
+          </el-radio-group>
+        </div>
+
+        <!-- 模板从属管理 -->
+        <div class="filter-item">
+          <span class="filter-label">模板从属管理</span>
+          <el-select v-model="selectedSubordinate" placeholder="选择管理" class="filter-select">
+            <el-option label="主管理" value="main"></el-option>
+            <el-option label="从管理" value="sub"></el-option>
+          </el-select>
+        </div>
+      </div>
+    </div>
+
+    <!-- 操作栏 -->
+    <div class="operation-bar">
+      <div class="left-operations">
+        <!-- 时间筛选 -->
+        <div class="time-filter">
+          <span class="filter-label">按创建时间排序</span>
+          <el-select v-model="timeSort" placeholder="全部" class="time-select">
+            <el-option label="全部" value="all"></el-option>
+            <el-option label="最新" value="newest"></el-option>
+            <el-option label="最旧" value="oldest"></el-option>
+          </el-select>
+        </div>
+
+        <!-- 搜索框 -->
+        <div class="search-box">
+          <el-input
+            v-model="searchKeyword"
+            placeholder="搜索"
+            class="search-input"
+            :prefix-icon="Search"
           />
-        </el-form-item>
-      </el-form>
-      
-      <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleSubmit">
-            确定
-          </el-button>
-        </span>
-      </template>
-    </el-dialog>
+        </div>
+      </div>
+
+      <div class="right-operations">
+        <!-- 操作按钮 -->
+        <el-button type="primary" :icon="Plus" class="action-btn">新增</el-button>
+        <el-button type="primary" :icon="Edit" class="action-btn">编辑</el-button>
+        <el-button type="danger" :icon="Delete" class="action-btn">关机</el-button>
+        <el-button type="success" class="action-btn register-btn">📋 注册模板</el-button>
+        <el-button type="danger" class="action-btn delete-btn">🗑️ 删除模板</el-button>
+      </div>
+    </div>
+
+    <!-- 模板卡片网格 -->
+    <div class="image-grid">
+      <div v-for="(image, index) in imageList" :key="index" class="image-card">
+        <!-- 卡片头部 -->
+        <div class="card-header">
+          <div class="card-title">
+            <span class="title-icon">📱</span>
+            <span class="title-text">{{ image.name }}</span>
+            <span class="system-badge">{{ image.system }}</span>
+          </div>
+          <div class="card-actions">
+            <el-button type="primary" size="small" :icon="Edit">编辑</el-button>
+            <el-button type="info" size="small" :icon="DocumentCopy">复制</el-button>
+            <el-button type="success" size="small" :icon="Download">下载</el-button>
+            <el-button type="info" size="small" :icon="MoreFilled">更多</el-button>
+          </div>
+        </div>
+
+        <!-- 卡片内容 -->
+        <div class="card-content">
+          <div class="content-row">
+            <div class="content-left">
+              <div class="info-item">
+                <span class="info-label">系统盘：</span>
+                <span class="info-value status-connected">{{ image.systemDisk }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">数据盘：</span>
+                <span class="info-value">{{ image.dataDisk }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">关联桌面数：</span>
+                <span class="info-value">{{ image.associatedDesktops }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">属主：</span>
+                <span class="info-value">{{ image.owner }}</span>
+              </div>
+            </div>
+            <div class="content-right">
+              <div class="info-item">
+                <span class="info-label">VOL上层...：</span>
+                <span class="info-value">{{ image.volLayer }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">异构驱动信息：</span>
+                <span class="info-value">{{ image.driverInfo }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">创建时间：</span>
+                <span class="info-value">{{ image.createTime }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">更新时间：</span>
+                <span class="info-value">{{ image.updateTime }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
-<script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
-import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
-import { 
-  Plus, 
-  Operation, 
-  Edit, 
-  Monitor, 
-  Folder, 
-  Document 
-} from '@element-plus/icons-vue'
+<script setup>
+import { ref, reactive } from 'vue'
+import { Search, Plus, Edit, Delete, DocumentCopy, Download, MoreFilled } from '@element-plus/icons-vue'
 
-interface DesktopItem {
-  id: number
-  name: string
-  type: string
-  path: string
-  status: string
-  description: string
-  created_at: string
-}
+// 筛选条件
+const selectedTopic = ref('all')
+const selectedManagement = ref('')
+const selectedImageGroup = ref('')
+const chargeModule = ref(true)
+const selectedSubordinate = ref('')
+const timeSort = ref('all')
+const searchKeyword = ref('')
 
-interface RecentItem {
-  id: number
-  name: string
-  time: string
-}
-
-interface SystemInfo {
-  cpuUsage: number
-  memoryUsage: number
-  diskUsage: number
-}
-
-const loading = ref(false)
-const dialogVisible = ref(false)
-const isEdit = ref(false)
-const formRef = ref<FormInstance>()
-
-const itemForm = reactive({
-  id: 0,
-  name: '',
-  type: '',
-  path: '',
-  status: 'active',
-  description: ''
-})
-
-const desktopItems = ref<DesktopItem[]>([])
-const recentItems = ref<RecentItem[]>([])
-const systemInfo = ref<SystemInfo>({
-  cpuUsage: 0,
-  memoryUsage: 0,
-  diskUsage: 0
-})
-
-const rules = {
-  name: [
-    { required: true, message: '请输入项目名称', trigger: 'blur' },
-    { min: 2, max: 30, message: '项目名称长度在 2 到 30 个字符', trigger: 'blur' }
-  ],
-  type: [
-    { required: true, message: '请选择类型', trigger: 'change' }
-  ],
-  path: [
-    { required: true, message: '请输入文件路径', trigger: 'blur' }
-  ],
-  status: [
-    { required: true, message: '请选择状态', trigger: 'change' }
-  ]
-}
-
-const loadDesktopItems = async () => {
-  loading.value = true
-  try {
-    // 模拟数据加载
-    desktopItems.value = [
-      {
-        id: 1,
-        name: '系统监控工具',
-        type: 'application',
-        path: '/usr/bin/monitor',
-        status: 'active',
-        description: '系统资源监控应用',
-        created_at: '2024-01-15 10:30'
-      },
-      {
-        id: 2,
-        name: '文档管理器',
-        type: 'folder',
-        path: '/home/documents',
-        status: 'active',
-        description: '文档存储目录',
-        created_at: '2024-01-14 14:20'
-      }
-    ]
-  } catch (error) {
-    ElMessage.error('加载桌面项目失败')
-  } finally {
-    loading.value = false
+// 模板数据
+const imageList = reactive([
+  {
+    name: '1506考试系统',
+    system: 'windows10 64bit',
+    systemDisk: '已连接',
+    dataDisk: '192.168.255.255',
+    associatedDesktops: '255.255.255.0',
+    owner: '-- --',
+    volLayer: '-- --',
+    driverInfo: '-- --',
+    createTime: '-- --',
+    updateTime: '-- --'
+  },
+  {
+    name: '1506考试系统',
+    system: 'windows10 64bit',
+    systemDisk: '已连接',
+    dataDisk: '192.168.255.255',
+    associatedDesktops: '255.255.255.0',
+    owner: '-- --',
+    volLayer: '-- --',
+    driverInfo: '-- --',
+    createTime: '-- --',
+    updateTime: '-- --'
+  },
+  {
+    name: '1506考试系统',
+    system: 'windows10 64bit',
+    systemDisk: '已连接',
+    dataDisk: '192.168.255.255',
+    associatedDesktops: '255.255.255.0',
+    owner: '-- --',
+    volLayer: '-- --',
+    driverInfo: '-- --',
+    createTime: '-- --',
+    updateTime: '-- --'
+  },
+  {
+    name: '1506考试系统',
+    system: 'windows10 64bit',
+    systemDisk: '已连接',
+    dataDisk: '192.168.255.255',
+    associatedDesktops: '255.255.255.0',
+    owner: '-- --',
+    volLayer: '-- --',
+    driverInfo: '-- --',
+    createTime: '-- --',
+    updateTime: '-- --'
   }
-}
-
-const loadRecentItems = () => {
-  recentItems.value = [
-    { id: 1, name: '工作报告.docx', time: '2小时前' },
-    { id: 2, name: '系统配置.txt', time: '4小时前' },
-    { id: 3, name: '数据分析.xlsx', time: '昨天' }
-  ]
-}
-
-const loadSystemInfo = () => {
-  // 模拟系统信息更新
-  systemInfo.value = {
-    cpuUsage: Math.floor(Math.random() * 100),
-    memoryUsage: Math.floor(Math.random() * 100),
-    diskUsage: Math.floor(Math.random() * 100)
-  }
-}
-
-const openCalculator = () => {
-  ElMessage.info('正在打开计算器...')
-}
-
-const openNotepad = () => {
-  ElMessage.info('正在打开记事本...')
-}
-
-const openTerminal = () => {
-  ElMessage.info('正在打开终端...')
-}
-
-const openFileManager = () => {
-  ElMessage.info('正在打开文件管理器...')
-}
-
-const openRecentItem = (item: RecentItem) => {
-  ElMessage.info(`正在打开: ${item.name}`)
-}
-
-const handleAdd = () => {
-  isEdit.value = false
-  dialogVisible.value = true
-  resetForm()
-}
-
-const handleEdit = (row: DesktopItem) => {
-  isEdit.value = true
-  dialogVisible.value = true
-  Object.assign(itemForm, row)
-}
-
-const handleDelete = async (row: DesktopItem) => {
-  try {
-    await ElMessageBox.confirm(
-      `确定要删除桌面项目 "${row.name}" 吗？`,
-      '确认删除',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning',
-      }
-    )
-    
-    ElMessage.success('删除成功')
-    loadDesktopItems()
-  } catch (error) {
-    // 用户取消了删除操作
-  }
-}
-
-const handleSubmit = async () => {
-  if (!formRef.value) return
-  
-  try {
-    await formRef.value.validate()
-    ElMessage.success(isEdit.value ? '更新成功' : '创建成功')
-    dialogVisible.value = false
-    loadDesktopItems()
-  } catch (error) {
-    console.error('表单验证失败:', error)
-  }
-}
-
-const resetForm = () => {
-  itemForm.id = 0
-  itemForm.name = ''
-  itemForm.type = ''
-  itemForm.path = ''
-  itemForm.status = 'active'
-  itemForm.description = ''
-}
-
-onMounted(() => {
-  loadDesktopItems()
-  loadRecentItems()
-  loadSystemInfo()
-  
-  // 定时更新系统信息
-  setInterval(loadSystemInfo, 5000)
-})
+])
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .desktop-management {
-  .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
+  padding: 20px;
+  background: #f5f7fa;
+  min-height: 100vh;
+}
 
-  .toolbar {
-    margin-bottom: 30px;
-  }
+/* 页面标题 */
+.page-header {
+  margin-bottom: 20px;
+}
 
-  .tool-card {
-    height: 280px;
+.page-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+  margin: 0;
+}
 
-    h3 {
-      margin: 0 0 20px 0;
-      color: #333;
-      font-size: 16px;
-      font-weight: 600;
-    }
-  }
+/* 筛选条件栏 */
+.filter-bar {
+  background: white;
+  padding: 16px 20px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
 
-  .tool-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
+.filter-group {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 24px;
+}
 
-    .tool-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 20px 10px;
-      border: 1px solid #e4e7ed;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.3s;
+.filter-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
-      &:hover {
-        background: #f5f7fa;
-        border-color: #1890ff;
-        transform: translateY(-2px);
-      }
+.filter-label {
+  font-size: 14px;
+  color: #666;
+  white-space: nowrap;
+}
 
-      .el-icon {
-        font-size: 28px;
-        color: #1890ff;
-        margin-bottom: 8px;
-      }
+.filter-select {
+  width: 140px;
+}
 
-      span {
-        font-size: 14px;
-        color: #333;
-      }
-    }
-  }
+.image-stats {
+  display: flex;
+  gap: 12px;
+}
 
-  .system-info {
-    .info-item {
-      margin-bottom: 20px;
-      
-      .label {
-        display: block;
-        margin-bottom: 8px;
-        font-size: 14px;
-        color: #666;
-      }
-    }
-  }
+.stat-item {
+  font-size: 14px;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
 
-  .recent-list {
-    .recent-item {
-      display: flex;
-      align-items: center;
-      padding: 10px 0;
-      border-bottom: 1px solid #f0f0f0;
-      cursor: pointer;
-      transition: background 0.3s;
+.stat-blue {
+  color: #1890ff;
+}
 
-      &:hover {
-        background: #f5f7fa;
-      }
+.stat-black {
+  color: #333;
+}
 
-      &:last-child {
-        border-bottom: none;
-      }
+.stat-red {
+  color: #ff4d4f;
+}
 
-      .el-icon {
-        margin-right: 10px;
-        color: #1890ff;
-      }
+.charge-module {
+  margin: 0;
+}
 
-      span {
-        flex: 1;
-        font-size: 14px;
-        color: #333;
-      }
+/* 操作栏 */
+.operation-bar {
+  background: white;
+  padding: 16px 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 
-      small {
-        color: #999;
-        font-size: 12px;
-      }
-    }
-  }
+.left-operations {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
 
-  .desktop-items {
-    h3 {
-      margin-bottom: 20px;
-      color: #333;
-      font-size: 18px;
-      font-weight: 600;
-    }
+.time-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.time-select {
+  width: 100px;
+}
+
+.search-input {
+  width: 300px;
+}
+
+.right-operations {
+  display: flex;
+  gap: 12px;
+}
+
+.action-btn {
+  height: 36px;
+}
+
+.register-btn {
+  background: #52c41a;
+  border-color: #52c41a;
+}
+
+.delete-btn {
+  background: #ff4d4f;
+  border-color: #ff4d4f;
+}
+
+/* 模板卡片网格 */
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.image-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.image-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* 卡片头部 */
+.card-header {
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.title-icon {
+  font-size: 18px;
+}
+
+.title-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.system-badge {
+  background: #1890ff;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.card-actions .el-button {
+  height: 28px;
+  padding: 4px 12px;
+  font-size: 12px;
+}
+
+/* 卡片内容 */
+.card-content {
+  padding: 16px 20px 20px;
+}
+
+.content-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.content-left,
+.content-right {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.info-label {
+  font-size: 14px;
+  color: #666;
+  white-space: nowrap;
+  min-width: 80px;
+}
+
+.info-value {
+  font-size: 14px;
+  color: #333;
+  flex: 1;
+}
+
+.status-connected {
+  color: #52c41a;
+  font-weight: 500;
+}
+
+/* 响应式设计 */
+@media (max-width: 1400px) {
+  .image-grid {
+    grid-template-columns: 1fr;
   }
 }
-</style> 
+
+@media (max-width: 768px) {
+  .filter-group {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .operation-bar {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+  
+  .left-operations,
+  .right-operations {
+    justify-content: center;
+  }
+  
+  .content-row {
+    grid-template-columns: 1fr;
+  }
+}
+</style>

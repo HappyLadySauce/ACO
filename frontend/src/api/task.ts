@@ -22,6 +22,10 @@ export interface TaskAssignment {
   performance_score: number
   comments?: string
   last_update: string
+  // 任务信息
+  task_name?: string
+  task_type?: string
+  task_phase?: string
 }
 
 export interface TaskWithAssignments extends Task {

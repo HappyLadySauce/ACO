@@ -197,6 +197,22 @@ async def get_user_task_stats(
     stats = TaskAssignmentService.get_user_task_stats(db=db, user_id=user_id)
     return stats
 
+@router.get("/task-assignments/stats")
+async def get_task_assignments_stats(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """获取全部任务分配统计"""
+    # 检查权限（只有管理员可以查看全部统计）
+    if current_user.type != "管理员":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="只有管理员可以查看全部任务统计"
+        )
+    
+    stats = TaskAssignmentService.get_all_task_stats(db=db)
+    return stats
+
 @router.post("/task-assignments", response_model=TaskAssignmentResponse)
 async def create_task_assignment(
     assignment: TaskAssignmentCreate,

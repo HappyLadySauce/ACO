@@ -56,6 +56,10 @@ class TaskAssignmentResponse(TaskAssignmentBase):
     id: int
     assigned_at: datetime
     last_update: datetime
+    # 任务信息
+    task_name: Optional[str] = None
+    task_type: Optional[str] = None
+    task_phase: Optional[str] = None
     
     model_config = ConfigDict(from_attributes=True)
 

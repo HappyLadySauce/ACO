@@ -108,7 +108,17 @@ class TaskAssignmentService:
         if status:
             query = query.filter(TaskAssignment.status == status)
             
-        return query.order_by(desc(TaskAssignment.assigned_at)).all()
+        assignments = query.order_by(desc(TaskAssignment.assigned_at)).all()
+        
+        # 填充任务信息
+        for assignment in assignments:
+            task = db.query(Task).filter(Task.id == assignment.task_id).first()
+            if task:
+                assignment.task_name = task.name
+                assignment.task_type = task.type
+                assignment.task_phase = task.phase
+        
+        return assignments
     
     @staticmethod
     def get_assignments(db: Session, skip: int = 0, limit: int = 100,
@@ -119,7 +129,17 @@ class TaskAssignmentService:
         if status:
             query = query.filter(TaskAssignment.status == status)
             
-        return query.order_by(desc(TaskAssignment.assigned_at)).offset(skip).limit(limit).all()
+        assignments = query.order_by(desc(TaskAssignment.assigned_at)).offset(skip).limit(limit).all()
+        
+        # 填充任务信息
+        for assignment in assignments:
+            task = db.query(Task).filter(Task.id == assignment.task_id).first()
+            if task:
+                assignment.task_name = task.name
+                assignment.task_type = task.type
+                assignment.task_phase = task.phase
+        
+        return assignments
     
     @staticmethod
     def create_assignment(db: Session, assignment: TaskAssignmentCreate) -> Optional[TaskAssignment]:
@@ -226,4 +246,27 @@ class TaskAssignmentService:
             "completed_tasks": completed,
             "in_progress_tasks": in_progress,
             "average_score": round(avg_score, 2)
+        }
+    
+    @staticmethod
+    def get_all_task_stats(db: Session) -> dict:
+        """获取全部任务分配统计"""
+        assignments = db.query(TaskAssignment).all()
+        
+        total = len(assignments)
+        completed = len([a for a in assignments if a.status == '已完成'])
+        in_progress = len([a for a in assignments if a.status == '进行中'])
+        paused = len([a for a in assignments if a.status == '已暂停'])
+        
+        avg_progress = 0
+        if assignments:
+            progress_values = [a.progress for a in assignments]
+            avg_progress = sum(progress_values) / len(progress_values)
+        
+        return {
+            "total_assignments": total,
+            "completed": completed,
+            "in_progress": in_progress,
+            "paused": paused,
+            "avg_progress": round(avg_progress, 2)
         } 

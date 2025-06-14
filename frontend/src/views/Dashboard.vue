@@ -30,7 +30,7 @@
           <img src="@/assets/icon/组 3591.png" alt="处理任务" />
         </div>
         <div class="stat-info">
-          <div class="stat-number">0个</div>
+          <div class="stat-number">{{ taskStats.processingTasks }}个</div>
           <div class="stat-label">处理任务数</div>
         </div>
       </div>
@@ -112,42 +112,36 @@
             <div class="chart-stats">
               <div class="stat-item">
                 <span class="stat-color stat-purple"></span>
-                <span class="stat-text">日常养护</span>
+                <span class="stat-text">告警状态统计</span>
                 <span class="stat-value">42%</span>
               </div>
               <div class="stat-item">
                 <span class="stat-color stat-green"></span>
-                <span class="stat-text">日常养护</span>
+                <span class="stat-text">告警级别统计</span>
                 <span class="stat-value">42%</span>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="chart-card device-chart">
+        <div class="chart-card device-alert-card">
           <div class="chart-header">
             <h3 class="chart-title">
               <img src="@/assets/icon/组 3262.png" alt="设备告警" class="chart-icon-img" />
               设备告警
             </h3>
           </div>
-          <div class="chart-content">
-            <div ref="deviceChart" class="pie-chart"></div>
-            <div class="chart-stats">
-              <div class="stat-item">
-                <span class="stat-color stat-red"></span>
-                <span class="stat-text">日常养护</span>
-                <span class="stat-value">42%</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-color stat-orange"></span>
-                <span class="stat-text">日常养护</span>
-                <span class="stat-value">42%</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-color stat-green2"></span>
-                <span class="stat-text">日常养护</span>
-                <span class="stat-value">42%</span>
+          <div class="device-alert-content">
+            <div class="alert-table-header">
+              <div class="alert-table-col header-col">任务类型</div>
+              <div class="alert-table-col header-col">任务类型</div>
+              <div class="alert-table-col header-col">阶段任务</div>
+            </div>
+            <div class="alert-table-body">
+              <div class="alert-table-row" v-for="(item, index) in deviceAlertData" :key="index">
+                <div class="alert-table-col">{{ item.type1 }}</div>
+                <div class="alert-table-col">{{ item.type2 }}</div>
+                <div class="alert-table-col">{{ item.phase }}</div>
               </div>
             </div>
           </div>
@@ -164,49 +158,57 @@
             任务信息
           </h3>
           <div class="table-actions">
-            <button class="action-btn create-btn">
+            <button class="action-btn create-btn" @click="handleCreateTask">
               <img src="@/assets/icon/添加.png" alt="创建任务" class="btn-icon-img" />
               创建任务
             </button>
-            <button class="action-btn download-btn">
+            <button class="action-btn download-btn" @click="handleAssignTask">
               <img src="@/assets/icon/任务.png" alt="任务下发" class="btn-icon-img" />
               任务下发
             </button>
-            <button class="action-btn progress-btn">
+            <button class="action-btn progress-btn" @click="handleManageProgress">
               <img src="@/assets/icon/系统参数.png" alt="进度管理" class="btn-icon-img" />
               进度管理
             </button>
-            <button class="action-btn import-btn">
-              <img src="@/assets/icon/upload.png" alt="批量导入" class="btn-icon-img" />
-              批量导入
+            <button class="action-btn import-btn" @click="handleRefreshData">
+              <img src="@/assets/icon/upload.png" alt="刷新数据" class="btn-icon-img" />
+              刷新数据
             </button>
           </div>
         </div>
         <div class="table-content">
-          <table class="device-table">
+          <div v-if="taskLoading" class="loading-container">
+            <div class="loading-text">加载中...</div>
+          </div>
+          <table v-else class="device-table">
             <thead>
               <tr>
                 <th>任务ID</th>
+                <th>任务名称</th>
                 <th>任务类型</th>
-                <th>任务类型</th>
-                <th>阶段任务</th>
+                <th>任务阶段</th>
                 <th>任务描述</th>
                 <th>执行角色</th>
                 <th>状态</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="device in deviceList" :key="device.id">
-                <td>{{ device.id }}</td>
-                <td>{{ device.type1 }}</td>
-                <td>{{ device.type2 }}</td>
-                <td>{{ device.phase }}</td>
-                <td>{{ device.description }}</td>
-                <td>{{ device.role }}</td>
+              <tr v-for="task in taskList" :key="task.id">
+                <td>{{ task.id }}</td>
+                <td>{{ task.name }}</td>
+                <td>{{ task.type || '-' }}</td>
+                <td>{{ task.phase || '-' }}</td>
+                <td>{{ task.description || '-' }}</td>
+                <td>-</td>
                 <td>
-                  <span :class="['status-tag', getStatusClass(device.status)]">
-                    {{ device.status }}
+                  <span :class="['status-tag', getStatusClass(task.status)]">
+                    {{ task.status }}
                   </span>
+                </td>
+              </tr>
+              <tr v-if="taskList.length === 0">
+                <td colspan="7" style="text-align: center; color: #999; padding: 40px;">
+                  暂无任务数据
                 </td>
               </tr>
             </tbody>
@@ -214,12 +216,18 @@
         </div>
       </div>
     </div>
+
+    <!-- 任务管理组件 -->
+    <TaskManagement ref="taskManagementRef" @refresh="loadTaskData" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import * as echarts from 'echarts'
+import { getTasks, getTasksCount, type Task } from '@/api/task'
+import { ElMessage } from 'element-plus'
+import TaskManagement from '@/components/TaskManagement.vue'
 
 interface DeviceInfo {
   id: number
@@ -234,6 +242,7 @@ interface DeviceInfo {
 const systemChart = ref<HTMLElement>()
 const alarmChart = ref<HTMLElement>()
 const deviceChart = ref<HTMLElement>()
+const taskManagementRef = ref<InstanceType<typeof TaskManagement>>()
 
 // 实时数据
 const realtimeData = ref({
@@ -245,35 +254,108 @@ const realtimeData = ref({
 let chartInstance: any = null
 let animationTimer: any = null
 
-const deviceList = ref<DeviceInfo[]>([
+// 任务列表数据 - 使用后端API
+const taskList = ref<Task[]>([])
+const taskStats = ref({
+  totalTasks: 0,
+  processingTasks: 0
+})
+const taskLoading = ref(false)
+
+// 设备告警数据
+const deviceAlertData = ref([
   {
-    id: 147,
-    type1: '重要APP AI监控检测测试',
+    type1: '蟹农APP AI信息模拟测试',
     type2: '开发测试任务',
-    phase: '确认用户需求描述',
-    description: '登录重要APP检测AI系统，确认测试AI监控功能',
-    role: '',
-    status: '未分配'
+    phase: '模拟用户审批请求'
   },
   {
-    id: 148,
-    type1: '全网设备导入JNC',
+    type1: '全网设备接入INC',
     type2: '运维监管任务',
-    phase: '设备管理',
-    description: '将全网设备导入JNC进行统一管理，网络设备统计并下发网关',
-    role: 'user4',
-    status: '未分配'
+    phase: '设备管理'
   },
   {
-    id: 148,
     type1: 'AI运维平台监管',
     type2: '运维监管任务',
-    phase: '运维监管',
-    description: '使用AI运维平台监管全网设备监控，并开行清理',
-    role: 'user4',
-    status: '已分配'
+    phase: '运维监管'
   }
 ])
+
+// 加载任务数据
+const loadTaskData = async () => {
+  if (taskLoading.value) return
+  
+  taskLoading.value = true
+  try {
+    // 获取任务列表
+    const tasksResponse = await getTasks({ limit: 10 })
+    taskList.value = tasksResponse.data
+    
+    // 获取任务统计
+    const totalResponse = await getTasksCount()
+    const processingResponse = await getTasksCount({ status: '进行中' })
+    
+    taskStats.value = {
+      totalTasks: totalResponse.data.count,
+      processingTasks: processingResponse.data.count
+    }
+    
+  } catch (error) {
+    console.error('加载任务数据失败:', error)
+    // 如果是网络错误或者无法连接后端，使用默认数据
+    if (taskList.value.length === 0) {
+      taskList.value = [
+        {
+          id: 1,
+          name: '系统监控任务',
+          type: '监控检测',
+          phase: '监控阶段',
+          description: '对系统进行实时监控和状态检查',
+          status: '进行中',
+          create_time: new Date().toISOString(),
+          update_time: new Date().toISOString()
+        },
+        {
+          id: 2,
+          name: '数据备份任务',
+          type: '数据管理',
+          phase: '备份阶段',
+          description: '定期备份重要数据',
+          status: '未分配',
+          create_time: new Date().toISOString(),
+          update_time: new Date().toISOString()
+        }
+      ]
+      taskStats.value = {
+        totalTasks: 2,
+        processingTasks: 1
+      }
+      ElMessage.warning('使用演示数据，请确保后端服务正常运行')
+    }
+  } finally {
+    taskLoading.value = false
+  }
+}
+
+
+
+// 任务操作处理函数
+const handleCreateTask = () => {
+  taskManagementRef.value?.showCreateTask()
+}
+
+const handleAssignTask = () => {
+  taskManagementRef.value?.showAssignTask()
+}
+
+const handleManageProgress = () => {
+  taskManagementRef.value?.showProgressManagement()
+}
+
+const handleRefreshData = () => {
+  loadTaskData()
+  ElMessage.success('数据刷新成功')
+}
 
 const getStatusClass = (status: string) => {
   const statusMap: { [key: string]: string } = {
@@ -418,8 +500,8 @@ const initAlarmChart = () => {
       radius: ['40%', '70%'],
       center: ['50%', '50%'],
       data: [
-        { value: 42, name: '日常养护', itemStyle: { color: '#8B5CF6' } },
-        { value: 58, name: '其他', itemStyle: { color: '#10B981' } }
+        { value: 42, name: '告警状态统计', itemStyle: { color: '#8B5CF6' } },
+        { value: 58, name: '告警级别统计', itemStyle: { color: '#10B981' } }
       ],
       label: { show: false },
       emphasis: { scale: false }
@@ -428,32 +510,14 @@ const initAlarmChart = () => {
   chart.setOption(option)
 }
 
-const initDeviceChart = () => {
-  if (!deviceChart.value) return
-  
-  const chart = echarts.init(deviceChart.value)
-  const option = {
-    series: [{
-      type: 'pie',
-      radius: ['40%', '70%'],
-      center: ['50%', '50%'],
-      data: [
-        { value: 42, name: '日常养护', itemStyle: { color: '#EF4444' } },
-        { value: 42, name: '日常养护', itemStyle: { color: '#F59E0B' } },
-        { value: 16, name: '日常养护', itemStyle: { color: '#10B981' } }
-      ],
-      label: { show: false },
-      emphasis: { scale: false }
-    }]
-  }
-  chart.setOption(option)
-}
+// 已移除deviceChart初始化，改为表格形式
 
 onMounted(async () => {
   await nextTick()
   initSystemChart()
   initAlarmChart()
-  initDeviceChart()
+  // initDeviceChart() - 已改为表格形式
+  loadTaskData()
 })
 
 // 组件卸载时清理定时器
@@ -794,6 +858,18 @@ onUnmounted(() => {
     .table-content {
       overflow-x: auto;
 
+      .loading-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 60px 20px;
+
+        .loading-text {
+          color: #6b7280;
+          font-size: 14px;
+        }
+      }
+
       .device-table {
         width: 100%;
         border-collapse: collapse;
@@ -841,6 +917,55 @@ onUnmounted(() => {
           &.status-completed {
             background: #ecfdf5;
             color: #059669;
+          }
+        }
+      }
+    }
+  }
+
+  // 设备告警表格样式
+  .device-alert-card {
+    .device-alert-content {
+      padding: 20px;
+    }
+
+    .alert-table-header {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #e5e7eb;
+
+      .header-col {
+        font-weight: 600;
+        color: #374151;
+        font-size: 14px;
+        text-align: center;
+      }
+    }
+
+    .alert-table-body {
+      .alert-table-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 20px;
+        padding: 12px 0;
+        border-bottom: 1px solid #f3f4f6;
+
+        &:hover {
+          background: #f9fafb;
+        }
+
+        .alert-table-col {
+          font-size: 13px;
+          color: #6b7280;
+          text-align: center;
+          padding: 8px;
+          
+          &:first-child {
+            color: #374151;
+            font-weight: 500;
           }
         }
       }

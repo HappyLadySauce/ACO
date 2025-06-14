@@ -11,6 +11,16 @@ export const getUserList = (params?: {
   return request.get<User[]>('/users', { params })
 }
 
+// 获取用户列表 (别名)
+export const getUsers = (params?: {
+  skip?: number
+  limit?: number
+  role?: string
+  user_type?: string
+}) => {
+  return request.get<User[]>('/users', { params })
+}
+
 // 创建用户
 export const createUser = (data: UserForm) => {
   return request.post<User>('/users', data)

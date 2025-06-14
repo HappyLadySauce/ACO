@@ -221,9 +221,13 @@ const loadAvailableTasks = async () => {
   loading.value = true
   try {
     const response = await getTasks()
-    availableTasks.value = response.data?.filter(task => task.status !== '已完成') || []
-  } catch (error) {
-    ElMessage.error('加载可用任务失败')
+    // 过滤掉已完成的任务，只显示可分配的任务
+    availableTasks.value = response.data?.filter(task => 
+      task.status !== '已完成' && task.status !== '已取消'
+    ) || []
+  } catch (error: any) {
+    const errorMsg = error?.response?.data?.detail || error?.message || '加载可用任务失败'
+    ElMessage.error(errorMsg)
     console.error('加载任务失败:', error)
   } finally {
     loading.value = false
@@ -319,6 +323,7 @@ const handleAssignTasks = async () => {
     for (const user of selectedUsers.value) {
       await createTaskAssignment({
         task_id: selectedTask.value.id,
+        user_id: user.id,
         username: user.username,
         status: '进行中',
         progress: 0,
@@ -327,15 +332,18 @@ const handleAssignTasks = async () => {
       })
     }
 
-    ElMessage.success('任务分配成功')
+    ElMessage.success(`成功为 ${selectedUsers.value.length} 个用户分配任务`)
+    // 清空选择状态
     selectedTask.value = null
     selectedUsers.value = []
     checkedAvailableUsers.value = []
     checkedSelectedUsers.value = []
-    loadAvailableTasks()
+    // 重新加载任务列表以更新状态
+    await loadAvailableTasks()
   } catch (error: any) {
     if (error?.message !== 'cancel') {
-      ElMessage.error('任务分配失败')
+      const errorMsg = error?.response?.data?.detail || error?.message || '任务分配失败'
+      ElMessage.error(errorMsg)
       console.error('分配任务失败:', error)
     }
   }

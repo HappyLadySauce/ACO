@@ -18,10 +18,10 @@
             <el-card class="tool-card">
               <h3>快捷工具</h3>
               <div class="tool-grid">
-                <div class="tool-item" @click="openCalculator">
-                  <el-icon><Calculator /></el-icon>
-                  <span>计算器</span>
-                </div>
+                            <div class="tool-item" @click="openCalculator">
+              <el-icon><Operation /></el-icon>
+              <span>计算器</span>
+            </div>
                 <div class="tool-item" @click="openNotepad">
                   <el-icon><Edit /></el-icon>
                   <span>记事本</span>
@@ -175,7 +175,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
 import { 
   Plus, 
-  Calculator, 
+  Operation, 
   Edit, 
   Monitor, 
   Folder, 

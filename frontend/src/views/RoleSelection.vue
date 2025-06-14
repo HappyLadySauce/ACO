@@ -26,7 +26,11 @@
               v-for="role in roleOptions" 
               :key="role.value"
               class="role-option"
-              :class="{ active: selectedRole === role.value }"
+              :class="{ 
+                active: selectedRole === role.value,
+                'role-selected': selectedRole === role.value 
+              }"
+              :data-selected="selectedRole === role.value"
               @click="selectRole(role.value)"
             >
               <div class="role-icon">
@@ -62,6 +66,7 @@
               class="back-button"
               @click="goBack"
             >
+              <el-icon><ArrowLeft /></el-icon>
               返回登录
             </el-button>
           </div>
@@ -74,7 +79,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { 
   UserFilled, 
   Monitor, 
@@ -82,7 +87,8 @@ import {
   DataAnalysis, 
   Cpu,
   Check,
-  Right 
+  Right,
+  ArrowLeft 
 } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/store/modules/auth'
 import { USER_ROLE_OPTIONS } from '@/types/user'
@@ -126,6 +132,8 @@ const roleOptions = [
 const selectRole = (role: string) => {
   selectedRole.value = role
 }
+
+
 
 // 确认选择
 const confirmSelection = async () => {
@@ -211,9 +219,24 @@ const confirmSelection = async () => {
 }
 
 // 返回登录
-const goBack = () => {
-  authStore.logoutAction()
-  router.push('/login')
+const goBack = async () => {
+  try {
+    await ElMessageBox.confirm(
+      '确定要返回登录页面吗？这将退出当前登录状态。',
+      '确认返回',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    )
+    
+    await authStore.logoutAction()
+    ElMessage.success('已退出登录')
+    router.push('/login')
+  } catch (error) {
+    // 用户取消了操作
+  }
 }
 
 // 组件挂载时检查用户类型
@@ -237,15 +260,17 @@ onMounted(() => {
 })
 </script>
 
-<style scoped lang="scss">
+<style lang="scss">
 .role-selection-container {
   position: relative;
   width: 100vw;
-  height: 100vh;
-  display: grid;
-  place-items: center;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  overflow: hidden;
+  overflow-x: hidden;
+  padding: 20px 0;
 }
 
 .background-shapes {
@@ -301,8 +326,8 @@ onMounted(() => {
   position: relative;
   z-index: 10;
   width: 100%;
-  max-width: 600px;
-  padding: 20px;
+  max-width: 580px;
+  padding: 16px;
 }
 
 .selection-card {
@@ -327,7 +352,7 @@ onMounted(() => {
 }
 
 .card-header {
-  padding: 40px 40px 20px;
+  padding: 32px 32px 16px;
   text-align: center;
   
   .logo-section {
@@ -335,20 +360,20 @@ onMounted(() => {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 80px;
-      height: 80px;
+      width: 64px;
+      height: 64px;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border-radius: 20px;
+      border-radius: 16px;
       color: white;
-      margin-bottom: 20px;
-      box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+      margin-bottom: 16px;
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
     }
     
     .title {
-      font-size: 28px;
+      font-size: 24px;
       font-weight: 700;
       color: #1a202c;
-      margin: 0 0 8px 0;
+      margin: 0 0 6px 0;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -356,7 +381,7 @@ onMounted(() => {
     }
     
     .subtitle {
-      font-size: 14px;
+      font-size: 13px;
       color: #718096;
       margin: 0;
       font-weight: 500;
@@ -365,59 +390,97 @@ onMounted(() => {
 }
 
 .card-body {
-  padding: 20px 40px 40px;
+  padding: 16px 32px 32px;
 }
 
 .role-options {
   display: grid;
-  gap: 16px;
-  margin-bottom: 32px;
+  gap: 12px;
+  margin-bottom: 24px;
 }
 
 .role-option {
   display: flex;
   align-items: center;
-  padding: 20px;
+  padding: 16px;
   border: 2px solid #e5e7eb;
-  border-radius: 16px;
+  border-radius: 12px;
   background: white;
   cursor: pointer;
   transition: all 0.3s ease;
   
-  &:hover {
+  &:hover:not(.active) {
     border-color: #d1d5db;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
-  
-  &.active {
-    border-color: #667eea;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-    
-    .role-icon {
-      background: rgba(255, 255, 255, 0.2);
-    }
-    
-    .role-name {
-      color: white;
-    }
-    
-    .role-desc {
-      color: rgba(255, 255, 255, 0.9);
-    }
-  }
+}
+
+// 选中状态样式 - 使用多种选择器确保生效
+.role-selection-container .role-option.role-selected,
+.role-selection-container .role-option.active,
+.role-option.role-selected,
+.role-option.active,
+.role-option[data-selected="true"] {
+  border: 2px solid #667eea !important;
+  background: linear-gradient(135deg, #667eea, #764ba2) !important;
+  background-color: transparent !important;
+  color: white !important;
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3) !important;
+  transform: translateY(-2px) !important;
+}
+
+.role-selection-container .role-option.role-selected .role-icon,
+.role-selection-container .role-option.active .role-icon,
+.role-option.role-selected .role-icon,
+.role-option.active .role-icon {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+}
+
+.role-selection-container .role-option.role-selected .role-name,
+.role-selection-container .role-option.active .role-name,
+.role-option.role-selected .role-name,
+.role-option.active .role-name {
+  color: white !important;
+}
+
+.role-selection-container .role-option.role-selected .role-desc,
+.role-selection-container .role-option.active .role-desc,
+.role-option.role-selected .role-desc,
+.role-option.active .role-desc {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.role-selection-container .role-option.role-selected .role-check .el-icon,
+.role-selection-container .role-option.active .role-check .el-icon,
+.role-option.role-selected .role-check .el-icon,
+.role-option.active .role-check .el-icon {
+  color: white !important;
+}
+
+// 确保hover状态不会覆盖选中状态
+.role-selection-container .role-option.role-selected:hover,
+.role-selection-container .role-option.active:hover,
+.role-option.role-selected:hover,
+.role-option.active:hover {
+  border: 2px solid #667eea !important;
+  background: linear-gradient(135deg, #667eea, #764ba2) !important;
+  background-color: transparent !important;
+  color: white !important;
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4) !important;
+  transform: translateY(-2px) !important;
 }
 
 .role-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 64px;
-  height: 64px;
+  width: 56px;
+  height: 56px;
   background: #f8fafc;
-  border-radius: 12px;
-  margin-right: 16px;
+  border-radius: 10px;
+  margin-right: 14px;
   color: #667eea;
   flex-shrink: 0;
 }
@@ -427,17 +490,17 @@ onMounted(() => {
 }
 
 .role-name {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   color: #1a202c;
-  margin: 0 0 8px 0;
+  margin: 0 0 6px 0;
 }
 
 .role-desc {
-  font-size: 14px;
+  font-size: 13px;
   color: #718096;
   margin: 0;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 .role-check {
@@ -448,51 +511,136 @@ onMounted(() => {
   justify-content: center;
   color: white;
   font-size: 18px;
+  
+  .el-icon {
+    color: white !important;
+  }
 }
 
 .action-buttons {
   display: grid;
-  gap: 16px;
+  gap: 12px;
 }
 
 .confirm-button {
-  width: 100%;
-  height: 52px;
-  font-size: 16px;
-  font-weight: 600;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: none;
+  width: 100% !important;
+  height: 48px !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  border-radius: 12px !important;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  border: none !important;
+  padding: 0 16px !important;
+  color: white !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
   
   &:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4) !important;
+  }
+  
+  &:focus:not(:disabled) {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    outline: none !important;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.3) !important;
+  }
+  
+  &:active:not(:disabled) {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    transform: translateY(0) !important;
+  }
+  
+  &:disabled {
+    background: #d1d5db !important;
+    color: #9ca3af !important;
+    transform: none !important;
+    box-shadow: none !important;
   }
   
   .el-icon {
-    margin-right: 6px;
+    margin-right: 6px !important;
+    color: white !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    vertical-align: middle !important;
+  }
+  
+  // 确保按钮内容居中对齐
+  span {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
   }
 }
 
 .back-button {
-  width: 100%;
-  height: 48px;
-  font-size: 14px;
-  border-radius: 12px;
-  border: 2px solid #e5e7eb;
-  background: white;
-  color: #374151;
+  width: 100% !important;
+  height: 46px !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  border-radius: 12px !important;
+  border: 2px solid #e5e7eb !important;
+  background: white !important;
+  color: #374151 !important;
+  transition: all 0.3s ease !important;
+  padding: 0 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
   
   &:hover {
-    border-color: #d1d5db;
-    background: #f9fafb;
+    border-color: #667eea !important;
+    background: #f8fafc !important;
+    color: #667eea !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2) !important;
+  }
+  
+  &:focus {
+    border-color: #667eea !important;
+    background: #f8fafc !important;
+    color: #667eea !important;
+    outline: none !important;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2) !important;
+  }
+  
+  &:active {
+    transform: translateY(0) !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1) !important;
+  }
+  
+  .el-icon {
+    margin-right: 6px !important;
+    font-size: 14px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    vertical-align: middle !important;
+  }
+  
+  // 确保按钮内容居中对齐
+  span {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
   }
 }
 
 /* 响应式设计 */
-@media (max-width: 640px) {
+@media (max-width: 768px) {
+  .role-selection-container {
+    padding: 16px 0;
+  }
+  
   .selection-wrapper {
-    padding: 16px;
+    padding: 12px;
+    max-width: 100%;
   }
   
   .selection-card {
@@ -500,39 +648,142 @@ onMounted(() => {
   }
   
   .card-header {
-    padding: 32px 24px 16px;
+    padding: 24px 20px 12px;
     
     .logo-section {
       .logo-icon {
-        width: 64px;
-        height: 64px;
+        width: 56px;
+        height: 56px;
+        margin-bottom: 12px;
       }
       
       .title {
-        font-size: 24px;
+        font-size: 20px;
+        margin-bottom: 4px;
+      }
+      
+      .subtitle {
+        font-size: 12px;
       }
     }
   }
   
   .card-body {
-    padding: 16px 24px 32px;
+    padding: 12px 20px 24px;
+  }
+  
+  .role-options {
+    gap: 10px;
+    margin-bottom: 20px;
   }
   
   .role-option {
-    padding: 16px;
+    padding: 14px;
     
     .role-icon {
-      width: 56px;
-      height: 56px;
+      width: 48px;
+      height: 48px;
       margin-right: 12px;
     }
     
     .role-name {
-      font-size: 16px;
+      font-size: 15px;
+      margin-bottom: 4px;
     }
     
     .role-desc {
-      font-size: 13px;
+      font-size: 12px;
+    }
+  }
+  
+  .confirm-button {
+    height: 46px !important;
+    font-size: 14px !important;
+    border-radius: 10px !important;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: white !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    
+    &:hover:not(:disabled) {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    }
+    
+    &:disabled {
+      background: #d1d5db !important;
+      color: #9ca3af !important;
+    }
+    
+    .el-icon {
+      display: inline-flex !important;
+      align-items: center !important;
+    }
+    
+    span {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      width: 100% !important;
+    }
+  }
+  
+  .back-button {
+    height: 42px !important;
+    font-size: 13px !important;
+    border-radius: 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    
+    .el-icon {
+      margin-right: 4px !important;
+      font-size: 12px !important;
+      display: inline-flex !important;
+      align-items: center !important;
+    }
+    
+    span {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      width: 100% !important;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .role-selection-container {
+    padding: 12px 0;
+  }
+  
+  .selection-wrapper {
+    padding: 8px;
+  }
+  
+  .card-header {
+    padding: 20px 16px 10px;
+  }
+  
+  .card-body {
+    padding: 10px 16px 20px;
+  }
+  
+  .role-option {
+    padding: 12px;
+    
+    .role-icon {
+      width: 44px;
+      height: 44px;
+      margin-right: 10px;
+    }
+    
+    .role-name {
+      font-size: 14px;
+    }
+    
+    .role-desc {
+      font-size: 11px;
     }
   }
 }

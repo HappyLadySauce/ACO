@@ -41,18 +41,22 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   // 登出操作
-  const logoutAction = async () => {
-    try {
-      await logout()
-    } catch (error) {
-      console.error('登出请求失败:', error)
-    } finally {
-      // 清除本地存储
-      token.value = ''
-      user.value = null
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
+  const logoutAction = async (skipApi = false) => {
+    if (!skipApi && token.value) {
+      try {
+        await logout()
+      } catch (error) {
+        console.error('登出请求失败:', error)
+        // 不要因为API调用失败就阻止清除本地状态
+      }
     }
+    
+    // 清除本地存储
+    token.value = ''
+    user.value = null
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    localStorage.removeItem('selectedRole')
   }
 
   // 获取当前用户信息

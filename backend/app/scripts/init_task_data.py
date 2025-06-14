@@ -3,6 +3,14 @@
 用于初始化一些测试任务数据
 """
 
+import sys
+import os
+from pathlib import Path
+
+# 添加backend目录到Python路径
+backend_dir = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(backend_dir))
+
 from sqlalchemy.orm import Session
 from app.database import SessionLocal, engine
 from app.models.task import Task, TaskAssignment

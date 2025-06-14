@@ -153,6 +153,48 @@ const confirmSelection = async () => {
     // 模拟角色验证过程
     await new Promise(resolve => setTimeout(resolve, 1000))
     
+    // 发送当前角色的全部信息到指定地址
+    const selectedRoleData = roleOptions.find(role => role.value === selectedRole.value)
+    const roleInfoData = {
+      user: {
+        id: currentUser.id,
+        username: currentUser.username,
+        role: currentUser.role,
+        type: currentUser.type,
+        status: currentUser.status,
+        photo_data: currentUser.photo_data,
+        created_at: currentUser.created_at,
+        updated_at: currentUser.updated_at
+      },
+      selectedRole: {
+        value: selectedRoleData?.value || selectedRole.value,
+        label: selectedRoleData?.label || selectedRole.value,
+        description: selectedRoleData?.description || '',
+        icon: selectedRoleData?.icon?.name || ''
+      },
+      timestamp: new Date().toISOString(),
+      action: 'role_selection'
+    }
+    
+    try {
+      const response = await fetch('http://127.0.0.1:8800/upload', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(roleInfoData)
+      })
+      
+      if (response.ok) {
+        console.log('角色信息已成功上传')
+      } else {
+        console.warn('角色信息上传失败:', response.status)
+      }
+    } catch (uploadError) {
+      console.error('上传角色信息时发生错误:', uploadError)
+      // 不阻断正常流程，只记录错误
+    }
+    
     ElMessage.success(`已切换到${selectedRole.value}角色`)
     
     // 保存选中的角色到本地存储

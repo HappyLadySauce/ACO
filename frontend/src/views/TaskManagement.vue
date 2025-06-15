@@ -49,7 +49,6 @@
               <el-option label="网络工程师" value="网络工程师" />
               <el-option label="系统架构工程师" value="系统架构工程师" />
               <el-option label="数据运维工程师" value="数据运维工程师" />
-              <el-option label="孪生平台" value="孪生平台" />
             </el-select>
           </el-form-item>
           <el-form-item>
@@ -70,14 +69,21 @@
           <el-table-column prop="phase" label="阶段" width="100" />
           <el-table-column prop="description" label="任务描述" show-overflow-tooltip min-width="150" />
           <el-table-column prop="role_binding" label="绑定角色" width="120" />
-          <el-table-column label="执行角色" width="120">
-          <template #default="scope">
-            <span v-if="scope.row.assignments && scope.row.assignments.length > 0">
-              {{ scope.row.assignments.map((a: any) => a.username).join(', ') }}
-            </span>
-            <el-tag v-else type="info" size="small">未分配</el-tag>
-          </template>
-        </el-table-column>
+          <el-table-column label="执行角色" width="200">
+            <template #default="scope">
+              <div v-if="scope.row.assignments && scope.row.assignments.length > 0" class="user-cards">
+                <div 
+                  v-for="assignment in scope.row.assignments" 
+                  :key="assignment.username"
+                  class="user-card"
+                >
+                  <div class="user-name">{{ assignment.username }}</div>
+                  <div class="user-role">{{ getUserRole(assignment.username) }}</div>
+                </div>
+              </div>
+              <el-tag v-else type="info" size="small">未分配</el-tag>
+            </template>
+          </el-table-column>
         <el-table-column prop="create_time" label="创建时间" width="150" />
         <el-table-column label="操作" width="160" fixed="right">
           <template #default="scope">
@@ -159,7 +165,6 @@
             <el-option label="网络工程师" value="网络工程师" />
             <el-option label="系统架构工程师" value="系统架构工程师" />
             <el-option label="数据运维工程师" value="数据运维工程师" />
-            <el-option label="孪生平台" value="孪生平台" />
           </el-select>
         </el-form-item>
 
@@ -301,7 +306,8 @@ import {
   SuccessFilled, CircleCloseFilled 
 } from '@element-plus/icons-vue'
 import { getTasks, getTasksCount, createTask, updateTask, deleteTask, getTask, bulkImportTasks, type TaskBulkImportResult } from '@/api/task'
-
+import { getUserList } from '@/api/user'
+import type { User } from '@/types/user'
 
 interface Task {
   id: number
@@ -347,6 +353,7 @@ const pagination = reactive({
 })
 
 const tasks = ref<Task[]>([])
+const users = ref<User[]>([])
 
 const importResult = reactive<TaskBulkImportResult>({
   success_count: 0,
@@ -373,6 +380,20 @@ const rules = {
 
 }
 
+// 根据用户名获取用户角色
+const getUserRole = (username: string): string => {
+  const user = users.value.find(u => u.username === username)
+  return user?.role || ''
+}
+
+// 格式化执行角色显示
+const formatAssignments = (assignments: any[]): string => {
+  if (!assignments || assignments.length === 0) {
+    return ''
+  }
+  return assignments.map(a => `${a.username}${getUserRole(a.username)}`).join(', ')
+}
+
 const loadTasks = async () => {
   loading.value = true
   try {
@@ -397,6 +418,16 @@ const loadTasks = async () => {
     console.error('加载任务失败:', error)
   } finally {
     loading.value = false
+  }
+}
+
+// 加载用户列表
+const loadUsers = async () => {
+  try {
+    const response = await getUserList({ limit: 1000 })
+    users.value = response.data || []
+  } catch (error) {
+    console.error('加载用户列表失败:', error)
   }
 }
 
@@ -643,6 +674,7 @@ const handleImport = async () => {
 }
 
 onMounted(() => {
+  loadUsers() // 先加载用户列表
   loadTasks()
 })
 </script>
@@ -670,6 +702,42 @@ onMounted(() => {
   .pagination {
     margin-top: 20px;
     text-align: right;
+  }
+
+  // 用户卡片样式
+  .user-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    
+    .user-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 8px;
+      padding: 6px 10px;
+      color: white;
+      font-size: 12px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s ease;
+      
+      &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      }
+      
+      .user-name {
+        font-weight: 600;
+        margin-bottom: 2px;
+      }
+      
+      .user-role {
+        font-size: 10px;
+        opacity: 0.9;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 4px;
+        padding: 1px 4px;
+        text-align: center;
+      }
+    }
   }
 }
 

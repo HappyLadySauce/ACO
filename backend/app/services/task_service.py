@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import desc
 from typing import List, Optional
 import logging
@@ -20,8 +20,8 @@ class TaskService:
     def get_tasks(db: Session, skip: int = 0, limit: int = 100, 
                   status: Optional[str] = None, task_type: Optional[str] = None, 
                   role_binding: Optional[str] = None) -> List[Task]:
-        """获取任务列表，支持状态、类型和角色过滤"""
-        query = db.query(Task)
+        """获取任务列表，支持状态、类型和角色过滤，包含分配信息"""
+        query = db.query(Task).options(joinedload(Task.assignments))
         
         if status:
             query = query.filter(Task.status == status)

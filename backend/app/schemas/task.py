@@ -29,6 +29,7 @@ class Task(TaskBase):
     id: int
     create_time: datetime
     update_time: datetime
+    assignments: List['TaskAssignmentResponse'] = []
     
     model_config = ConfigDict(from_attributes=True)
 
@@ -79,4 +80,7 @@ class TaskAssignmentResponse(TaskAssignmentBase):
 
 class TaskWithAssignments(Task):
     """包含分配信息的任务模式"""
-    assignments: List[TaskAssignmentResponse] = [] 
+    assignments: List[TaskAssignmentResponse] = []
+
+# 解析前向引用
+Task.model_rebuild() 

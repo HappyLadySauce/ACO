@@ -9,6 +9,7 @@ export interface Task {
   create_time: string
   update_time: string
   role_binding?: string
+  assignments?: TaskAssignment[]
 }
 
 // 任务表单类型

@@ -118,6 +118,14 @@
         <div class="button-particles"></div>
       </el-button>
     </div>
+    
+    <!-- 访问权限错误弹窗 -->
+    <AccessDeniedDialog 
+      :visible="showAccessDenied"
+      :message="accessDeniedMessage"
+      @close="handleAccessDeniedClose"
+      @confirm="handleAccessDeniedConfirm"
+    />
   </div>
 </template>
 
@@ -137,6 +145,7 @@ import {
 } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/store/modules/auth'
 import { USER_ROLE_OPTIONS } from '@/types/user'
+import AccessDeniedDialog from '@/components/AccessDeniedDialog.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -145,6 +154,10 @@ const authStore = useAuthStore()
 const selectedRole = ref<string>('')
 const loading = ref(false)
 const currentDateTime = ref<string>('')
+
+// 访问权限弹窗
+const showAccessDenied = ref(false)
+const accessDeniedMessage = ref('')
 
 // 角色选项配置
 const roleOptions = [
@@ -198,6 +211,21 @@ const updateDateTime = () => {
 
 // 选择角色
 const selectRole = (role: string) => {
+  // 检查用户是否有权限使用该角色
+  const currentUser = authStore.user
+  if (!currentUser) {
+    ElMessage.error('用户信息获取失败，请重新登录')
+    router.push('/login')
+    return
+  }
+  
+  // 检查操作员是否有权限使用选中的角色
+  if (currentUser.type === '操作员' && currentUser.role !== role) {
+    accessDeniedMessage.value = `您无权限使用"${role}"角色，您的角色是"${currentUser.role}"`
+    showAccessDenied.value = true
+    return
+  }
+  
   selectedRole.value = role
 }
 
@@ -246,7 +274,8 @@ const confirmSelection = async () => {
   
   // 检查操作员是否有权限使用选中的角色
   if (currentUser.type === '操作员' && currentUser.role !== selectedRole.value) {
-    ElMessage.error(`您无权限使用"${selectedRole.value}"角色，您的角色是"${currentUser.role}"`)
+    accessDeniedMessage.value = `您无权限使用"${selectedRole.value}"角色，您的角色是"${currentUser.role}"`
+    showAccessDenied.value = true
     return
   }
   
@@ -331,6 +360,17 @@ const goBack = async () => {
   } catch (error) {
     // 用户取消了操作
   }
+}
+
+// 处理访问权限错误弹窗关闭
+const handleAccessDeniedClose = () => {
+  showAccessDenied.value = false
+}
+
+// 处理访问权限错误弹窗确认
+const handleAccessDeniedConfirm = () => {
+  showAccessDenied.value = false
+  // 可以在这里添加其他逻辑，比如跳转到帮助页面或联系管理员
 }
 
 // 组件挂载时检查用户类型

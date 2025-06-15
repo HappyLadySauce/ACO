@@ -29,7 +29,7 @@
         
         <div class="system-title">
           <div class="title-glow-bg"></div>
-          <span class="title-text">多智能体运维协作系统管理</span>
+          <span class="title-text">分布式一体化协作平台</span>
           <div class="title-decorations">
             <div class="deco-left"></div>
             <div class="deco-right"></div>
@@ -900,7 +900,8 @@ onMounted(() => {
 
 .roles-grid {
   display: flex;
-  gap: 40px;
+  /* 📏 修改卡片间距 */
+  gap: 40px;      /* 卡片之间的间距 - 调整此值改变卡片间距 */
   justify-content: center;
   align-items: flex-end;
   flex-wrap: nowrap;
@@ -911,8 +912,9 @@ onMounted(() => {
 /* 角色卡片 */
 .role-card {
   position: relative;
-  width: 280px;
-  height: 340px;
+  /* 📦 修改卡片大小 - 主要尺寸设置 */
+  width: 280px;   /* 卡片宽度 - 调整此值改变卡片宽度 */
+  height: 340px;  /* 卡片高度 - 调整此值改变卡片高度 */
   cursor: pointer;
   transform-style: preserve-3d;
   transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
@@ -994,8 +996,9 @@ onMounted(() => {
 
 .role-3d-icon {
   position: relative;
-  width: 240px;
-  height: 240px;
+  /* 🎯 修改图标容器大小 */
+  width: 240px;   /* 图标容器宽度 - 调整此值改变图标区域大小 */
+  height: 240px;  /* 图标容器高度 - 调整此值改变图标区域大小 */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1011,14 +1014,15 @@ onMounted(() => {
   transform-style: preserve-3d;
 }
 
-.tech-icon {
-  width: 220px;
-  height: 220px;
-  object-fit: contain;
-  filter: drop-shadow(0 0 20px rgba(0, 255, 255, 0.6));
-  transition: all 0.5s ease;
-  animation: iconFloat 3s ease-in-out infinite;
-}
+  .tech-icon {
+    /* 🖼️ 修改图标实际大小 */
+    width: 240px;   /* 图标实际宽度 - 调整此值改变图标显示大小 */
+    height: 240px;  /* 图标实际高度 - 调整此值改变图标显示大小 */
+    object-fit: contain;
+    filter: drop-shadow(0 0 20px rgba(0, 255, 255, 0.6));
+    transition: all 0.5s ease;
+    animation: iconFloat 3s ease-in-out infinite;
+  }
 
 .role-card:hover .tech-icon {
   filter: drop-shadow(0 0 30px rgba(0, 255, 255, 0.8));
@@ -1311,7 +1315,7 @@ onMounted(() => {
   }
 }
 
-/* 响应式设计 */
+/* 响应式设计 - 🔧 修改不同屏幕尺寸下的卡片和图标大小 */
 @media (max-width: 1600px) {
   .roles-grid {
     gap: 30px;
@@ -1319,18 +1323,21 @@ onMounted(() => {
   }
   
   .role-card {
-    width: 260px;
-    height: 320px;
+    /* 📦 1600px以下屏幕的卡片尺寸 */
+    width: 260px;   /* 调整卡片宽度 */
+    height: 320px;  /* 调整卡片高度 */
   }
   
-  .tech-icon {
-    width: 200px;
-    height: 200px;
-  }
+      .tech-icon {
+      /* 🖼️ 1600px以下屏幕的图标尺寸 */
+      width: 220px;   /* 调整图标宽度 */
+      height: 220px;  /* 调整图标高度 */
+    }
   
   .role-3d-icon {
-    width: 220px;
-    height: 220px;
+    /* 🎯 1600px以下屏幕的图标容器尺寸 */
+    width: 220px;   /* 调整图标容器宽度 */
+    height: 220px;  /* 调整图标容器高度 */
   }
   
   .icon-glow {
@@ -1350,18 +1357,21 @@ onMounted(() => {
   }
   
   .role-card {
-    width: 220px;
-    height: 280px;
+    /* 📦 1400px以下屏幕的卡片尺寸 */
+    width: 220px;   /* 调整卡片宽度 */
+    height: 280px;  /* 调整卡片高度 */
   }
   
   .tech-icon {
-    width: 160px;
-    height: 160px;
+    /* 🖼️ 1400px以下屏幕的图标尺寸 */
+    width: 180px;   /* 调整图标宽度 */
+    height: 180px;  /* 调整图标高度 */
   }
   
   .role-3d-icon {
-    width: 180px;
-    height: 180px;
+    /* 🎯 1400px以下屏幕的图标容器尺寸 */
+    width: 180px;   /* 调整图标容器宽度 */
+    height: 180px;  /* 调整图标容器高度 */
   }
   
   .platform-base {
@@ -1377,18 +1387,21 @@ onMounted(() => {
   }
   
   .role-card {
-    width: 200px;
-    height: 260px;
+    /* 📦 1200px以下屏幕的卡片尺寸 */
+    width: 200px;   /* 调整卡片宽度 */
+    height: 260px;  /* 调整卡片高度 */
   }
   
   .tech-icon {
-    width: 140px;
-    height: 140px;
+    /* 🖼️ 1200px以下屏幕的图标尺寸 */
+    width: 140px;   /* 调整图标宽度 */
+    height: 140px;  /* 调整图标高度 */
   }
   
   .role-3d-icon {
-    width: 160px;
-    height: 160px;
+    /* 🎯 1200px以下屏幕的图标容器尺寸 */
+    width: 160px;   /* 调整图标容器宽度 */
+    height: 160px;  /* 调整图标容器高度 */
   }
   
   .platform-base {
@@ -1413,18 +1426,21 @@ onMounted(() => {
   }
   
   .role-card {
-    width: 160px;
-    height: 220px;
+    /* 📦 768px以下屏幕(手机)的卡片尺寸 */
+    width: 160px;   /* 调整卡片宽度 */
+    height: 220px;  /* 调整卡片高度 */
   }
   
   .tech-icon {
-    width: 120px;
-    height: 120px;
+    /* 🖼️ 768px以下屏幕(手机)的图标尺寸 */
+    width: 120px;   /* 调整图标宽度 */
+    height: 120px;  /* 调整图标高度 */
   }
   
   .role-3d-icon {
-    width: 140px;
-    height: 140px;
+    /* 🎯 768px以下屏幕(手机)的图标容器尺寸 */
+    width: 140px;   /* 调整图标容器宽度 */
+    height: 140px;  /* 调整图标容器高度 */
   }
   
   .role-name {

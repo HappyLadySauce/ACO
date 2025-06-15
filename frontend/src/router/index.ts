@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { useAuthStore } from '@/store/modules/auth'
 import { ElMessage } from 'element-plus'
+import { useAuthStore } from '@/store/modules/auth'
 
 const routes = [
   {
@@ -58,6 +58,7 @@ const routes = [
         component: () => import('@/views/TaskManagement.vue'),
         meta: { 
           requiresAuth: true,
+          requiresPermission: 'task:manage',
           title: '任务管理'
         }
       },
@@ -95,6 +96,7 @@ const routes = [
         component: () => import('@/views/DesktopManagement.vue'),
         meta: { 
           requiresAuth: true,
+          requiresPermission: 'desktop:manage',
           title: '桌面管理'
         }
       },
@@ -172,6 +174,13 @@ router.beforeEach(async (to, from, next) => {
   // 需要操作员权限但用户不是操作员或管理员
   if (to.meta.requiresOperator && !authStore.isOperator) {
     ElMessage.error('权限不足，需要操作员或更高权限')
+    next('/dashboard')
+    return
+  }
+
+  // 需要特定权限
+  if (to.meta.requiresPermission && !authStore.hasPermission(to.meta.requiresPermission as string)) {
+    ElMessage.error('权限不足，无法访问此功能')
     next('/dashboard')
     return
   }

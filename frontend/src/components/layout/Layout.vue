@@ -102,6 +102,7 @@
           class="nav-item" 
           :class="{ active: $route.path === '/tasks' }" 
           @click="$router.push('/tasks')"
+          v-if="userStore.isAdmin || userStore.hasPermission('task:manage')"
         >
           <img src="@/assets/icon/任务.png" alt="任务管理" class="nav-icon-img" />
           <span class="nav-text">任务管理</span>
@@ -131,7 +132,12 @@
           <span class="nav-text">设备管理</span>
         </div>
         
-        <div class="nav-item" :class="{ active: $route.path === '/desktop' }" @click="$router.push('/desktop')">
+        <div 
+          class="nav-item" 
+          :class="{ active: $route.path === '/desktop' }" 
+          @click="$router.push('/desktop')"
+          v-if="userStore.isAdmin || userStore.hasPermission('desktop:manage')"
+        >
           <img src="@/assets/icon/桌面设置.png" alt="桌面管理" class="nav-icon-img" />
           <span class="nav-text">桌面管理</span>
         </div>

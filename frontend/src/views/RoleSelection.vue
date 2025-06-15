@@ -17,9 +17,9 @@
         <div class="top-bar-lines">
           <div class="line line-left"></div>
           <div class="line line-right"></div>
-        </div>
+            </div>
         <div class="top-bar-particles"></div>
-      </div>
+          </div>
       
       <div class="top-bar-content">
         <div class="datetime">
@@ -79,16 +79,16 @@
       </div>
       
       <div class="roles-grid">
-        <div 
-          v-for="role in roleOptions" 
-          :key="role.value"
+            <div 
+              v-for="role in roleOptions" 
+              :key="role.value"
           class="role-card"
-          :class="{ 
+              :class="{ 
             'selected': selectedRole === role.value,
             'available': true
-          }"
-          @click="selectRole(role.value)"
-        >
+              }"
+              @click="selectRole(role.value)"
+            >
           <div class="card-glow" :class="{ 'active': selectedRole === role.value }"></div>
           <div class="card-inner">
             <div class="role-3d-icon">
@@ -96,27 +96,27 @@
                 <img :src="role.iconUrl" :alt="role.label" class="tech-icon">
                 <div class="icon-glow"></div>
               </div>
-            </div>
+              </div>
             <div class="role-name">{{ role.label }}</div>
           </div>
           <div class="card-base"></div>
-        </div>
-      </div>
-    </div>
-
+              </div>
+            </div>
+          </div>
+          
     <!-- 确认按钮 -->
     <div class="action-section" v-if="selectedRole">
-      <el-button
-        type="primary"
-        size="large"
-        :loading="loading"
+            <el-button
+              type="primary"
+              size="large"
+              :loading="loading"
         class="tech-confirm-button"
-        @click="confirmSelection"
-      >
+              @click="confirmSelection"
+            >
         <span class="button-text">启动选择</span>
         <div class="button-glow"></div>
         <div class="button-particles"></div>
-      </el-button>
+            </el-button>
     </div>
     
     <!-- 访问权限错误弹窗 -->
@@ -371,6 +371,7 @@ const handleAccessDeniedClose = () => {
 const handleAccessDeniedConfirm = () => {
   showAccessDenied.value = false
   // 可以在这里添加其他逻辑，比如跳转到帮助页面或联系管理员
+  ElMessage.info('如需申请更多权限，请联系系统管理员')
 }
 
 // 组件挂载时检查用户类型
@@ -419,9 +420,9 @@ onMounted(() => {
   height: 100%;
   z-index: 1;
 }
-
+  
 .main-background {
-  position: absolute;
+    position: absolute;
   top: 0;
   left: 0;
   width: 100%;
@@ -551,7 +552,7 @@ onMounted(() => {
 .line {
   position: absolute;
   top: 50%;
-  width: 200px;
+      width: 200px;
   height: 2px;
   background: linear-gradient(
     90deg,
@@ -789,7 +790,7 @@ onMounted(() => {
     rgba(0, 255, 255, 0.4)
   );
   border-radius: 8px;
-  opacity: 0;
+    opacity: 0;
   transition: opacity 0.3s ease;
   filter: blur(4px);
 }
@@ -808,7 +809,7 @@ onMounted(() => {
 }
 
 .action-btn:hover .btn-glow {
-  opacity: 1;
+    opacity: 1;
 }
 
 /* 退出登录按钮特殊样式 */
@@ -850,7 +851,7 @@ onMounted(() => {
   height: 100%;
   display: flex;
   align-items: flex-end;
-  justify-content: center;
+      justify-content: center;
 }
 
 .platform-background {
@@ -1481,15 +1482,15 @@ onMounted(() => {
     /* 🎯 768px以下屏幕(手机)的图标容器尺寸 */
     width: 140px;   /* 调整图标容器宽度 */
     height: 140px;  /* 调整图标容器高度 */
-  }
-  
-  .role-name {
+    }
+    
+    .role-name {
     font-size: 16px;
-  }
-  
+    }
+    
   .platform-base {
     width: 800px;
-  }
+    }
   
   .tech-confirm-button {
     width: 160px;

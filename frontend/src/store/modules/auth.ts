@@ -97,8 +97,17 @@ export const useAuthStore = defineStore('auth', () => {
       // 检查操作员的角色是否匹配
       if (selectedRole !== user.value.role) return false
       
-      const operatorPermissions = ['user:read', 'task:all', 'device:all', 'desktop:all']
-      return operatorPermissions.includes(permission)
+      // 根据不同角色定义不同权限
+      const rolePermissions: Record<string, string[]> = {
+        '系统分析师': ['user:read', 'device:read', 'task:read'],
+        '网络工程师': ['device:all', 'task:read'],
+        '系统架构工程师': ['task:manage', 'device:all'],
+        '数据运维工程师': ['task:manage', 'desktop:manage', 'device:all'],
+        '孪生平台': ['desktop:manage', 'task:read', 'device:read']
+      }
+      
+      const allowedPermissions = rolePermissions[selectedRole] || []
+      return allowedPermissions.includes(permission)
     }
     
     return false

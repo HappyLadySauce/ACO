@@ -119,7 +119,7 @@
               <!-- 告警状态统计 -->
               <div class="alert-chart-item">
                 <div class="chart-selector">
-                  <select v-model="alertStatusType" @change="updateAlertStatusChart">
+                  <select v-model="alertStatusType" @change="updateAlertStatusChart" class="chart-select">
                     <option value="status">告警状态</option>
                     <option value="level">告警等级</option>
                     <option value="type">告警类型</option>
@@ -131,7 +131,7 @@
               <!-- 告警级别统计 -->
               <div class="alert-chart-item">
                 <div class="chart-selector">
-                  <select v-model="alertLevelType" @change="updateAlertLevelChart">
+                  <select v-model="alertLevelType" @change="updateAlertLevelChart" class="chart-select">
                     <option value="level">告警级别</option>
                     <option value="region">区域分布</option>
                     <option value="time">时段分布</option>
@@ -141,28 +141,47 @@
                 <div class="alert-chart-label">告警级别统计</div>
               </div>
             </div>
-            <!-- 图例 -->
-            <div class="alert-legends">
-              <div class="legend-row">
-                <div class="legend-item">
-                  <span class="legend-dot" style="background: #ff7875;"></span>
-                  CPU告警
+            <!-- 告警统计概览 -->
+            <div class="alert-stats-overview">
+              <div class="stats-row">
+                <div class="stat-item">
+                  <div class="stat-icon critical">
+                    <i class="fas fa-exclamation-triangle"></i>
+                  </div>
+                  <div class="stat-content">
+                    <div class="stat-number">{{ alertData.level.critical }}</div>
+                    <div class="stat-label">严重告警</div>
+                  </div>
                 </div>
-                <div class="legend-percentage">42%</div>
+                <div class="stat-item">
+                  <div class="stat-icon warning">
+                    <i class="fas fa-exclamation-circle"></i>
+                  </div>
+                  <div class="stat-content">
+                    <div class="stat-number">{{ alertData.level.warning }}</div>
+                    <div class="stat-label">警告告警</div>
+                  </div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-icon info">
+                    <i class="fas fa-info-circle"></i>
+                  </div>
+                  <div class="stat-content">
+                    <div class="stat-number">{{ alertData.level.info }}</div>
+                    <div class="stat-label">信息告警</div>
+                  </div>
+                </div>
               </div>
-              <div class="legend-row">
-                <div class="legend-item">
-                  <span class="legend-dot" style="background: #ffa940;"></span>
-                  内存告警
+              
+              <div class="trend-info">
+                <div class="trend-item">
+                  <span class="trend-label">今日新增:</span>
+                  <span class="trend-value increase">+{{ alertData.trend.today - alertData.trend.yesterday }}</span>
                 </div>
-                <div class="legend-percentage">42%</div>
-              </div>
-              <div class="legend-row">
-                <div class="legend-item">
-                  <span class="legend-dot" style="background: #52c41a;"></span>
-                  磁盘告警
+                <div class="trend-item">
+                  <span class="trend-label">本周总计:</span>
+                  <span class="trend-value">{{ alertData.trend.thisWeek }}</span>
                 </div>
-                <div class="legend-percentage">42%</div>
               </div>
             </div>
           </div>
@@ -273,9 +292,9 @@ const alertStatusChart = ref<HTMLElement>()
 const alertLevelChart = ref<HTMLElement>()
 // 实时数据
 const realtimeData = ref({
-  cpu: [18, 20, 22, 19, 21, 20, 23, 18, 19, 21, 20],
-  memory: [38, 40, 42, 39, 41, 40, 43, 38, 39, 41, 40],
-  disk: [62, 64, 66, 63, 65, 64, 67, 62, 63, 65, 64]
+  cpu: [15, 22, 18, 28, 19, 25, 16, 30, 21, 17, 24],
+  memory: [32, 45, 38, 52, 41, 48, 35, 55, 42, 39, 50],
+  disk: [58, 68, 62, 72, 65, 70, 60, 75, 63, 67, 71]
 })
 
 // 实时信息显示
@@ -290,6 +309,32 @@ let animationTimer: any = null
 // 告警图表选择器状态
 const alertStatusType = ref('status')
 const alertLevelType = ref('level')
+
+// 告警数据
+const alertData = ref({
+  status: {
+    active: 32,
+    resolved: 45,
+    pending: 23
+  },
+  level: {
+    critical: 15,
+    warning: 42,
+    info: 43
+  },
+  type: {
+    cpu: 25,
+    memory: 35,
+    disk: 20,
+    network: 20
+  },
+  trend: {
+    today: 58,
+    yesterday: 42,
+    thisWeek: 156,
+    lastWeek: 134
+  }
+})
 
 // 生成时间标签
 const generateTimeLabels = () => {
@@ -623,15 +668,15 @@ const initSystemChart = () => {
 
 // 生成随机数据
 const generateCpuData = (baseValue: number) => {
-  return Math.max(15, Math.min(25, baseValue + (Math.random() - 0.5) * 6))
+  return Math.max(10, Math.min(35, baseValue + (Math.random() - 0.5) * 12))
 }
 
 const generateMemoryData = (baseValue: number) => {
-  return Math.max(35, Math.min(45, baseValue + (Math.random() - 0.5) * 8))
+  return Math.max(25, Math.min(60, baseValue + (Math.random() - 0.5) * 15))
 }
 
 const generateDiskData = (baseValue: number) => {
-  return Math.max(60, Math.min(68, baseValue + (Math.random() - 0.5) * 6))
+  return Math.max(45, Math.min(80, baseValue + (Math.random() - 0.5) * 12))
 }
 
 // 实时更新数据
@@ -648,9 +693,35 @@ const updateChartData = () => {
   const lastMemoryValue = realtimeData.value.memory[realtimeData.value.memory.length - 1]
   const lastDiskValue = realtimeData.value.disk[realtimeData.value.disk.length - 1]
   
-  const newCpuValue = generateCpuData(lastCpuValue)
-  const newMemoryValue = generateMemoryData(lastMemoryValue)
-  const newDiskValue = generateDiskData(lastDiskValue)
+  // 偶尔生成突发负载或低谷
+  const spikeProbability = 0.15 // 15%概率出现突发情况
+  const isSpike = Math.random() < spikeProbability
+  
+  let newCpuValue = generateCpuData(lastCpuValue)
+  let newMemoryValue = generateMemoryData(lastMemoryValue)
+  let newDiskValue = generateDiskData(lastDiskValue)
+  
+  if (isSpike) {
+    // 随机选择一个资源出现突发情况
+    const spikeType = Math.floor(Math.random() * 3)
+    switch (spikeType) {
+      case 0: // CPU突发
+        newCpuValue = Math.random() > 0.5 ? 
+          Math.min(90, lastCpuValue + 20 + Math.random() * 15) : 
+          Math.max(5, lastCpuValue - 10 - Math.random() * 8)
+        break
+      case 1: // 内存突发
+        newMemoryValue = Math.random() > 0.5 ? 
+          Math.min(85, lastMemoryValue + 15 + Math.random() * 20) : 
+          Math.max(15, lastMemoryValue - 15 - Math.random() * 10)
+        break
+      case 2: // 磁盘突发
+        newDiskValue = Math.random() > 0.5 ? 
+          Math.min(95, lastDiskValue + 10 + Math.random() * 15) : 
+          Math.max(30, lastDiskValue - 12 - Math.random() * 8)
+        break
+    }
+  }
   
   realtimeData.value.cpu.push(newCpuValue)
   realtimeData.value.memory.push(newMemoryValue)
@@ -723,47 +794,143 @@ const initAlertStatusChart = () => {
   if (!alertStatusChart.value) return
   
   const chart = echarts.init(alertStatusChart.value)
+  
+  const getChartData = () => {
+    switch (alertStatusType.value) {
+      case 'status':
+        return [
+          { 
+            value: alertData.value.status.active, 
+            name: '活跃告警',
+            itemStyle: { color: '#ef4444' }
+          },
+          { 
+            value: alertData.value.status.resolved, 
+            name: '已解决',
+            itemStyle: { color: '#10b981' }
+          },
+          { 
+            value: alertData.value.status.pending, 
+            name: '待处理',
+            itemStyle: { color: '#f59e0b' }
+          }
+        ]
+      case 'level':
+        return [
+          { 
+            value: alertData.value.level.critical, 
+            name: '严重告警',
+            itemStyle: { color: '#dc2626' }
+          },
+          { 
+            value: alertData.value.level.warning, 
+            name: '警告',
+            itemStyle: { color: '#f59e0b' }
+          },
+          { 
+            value: alertData.value.level.info, 
+            name: '信息',
+            itemStyle: { color: '#3b82f6' }
+          }
+        ]
+      case 'type':
+        return [
+          { 
+            value: alertData.value.type.cpu, 
+            name: 'CPU告警',
+            itemStyle: { color: '#ef4444' }
+          },
+          { 
+            value: alertData.value.type.memory, 
+            name: '内存告警',
+            itemStyle: { color: '#f59e0b' }
+          },
+          { 
+            value: alertData.value.type.disk, 
+            name: '磁盘告警',
+            itemStyle: { color: '#8b5cf6' }
+          },
+          { 
+            value: alertData.value.type.network, 
+            name: '网络告警',
+            itemStyle: { color: '#06b6d4' }
+          }
+        ]
+      default:
+        return []
+    }
+  }
+  
   const option = {
     tooltip: {
       trigger: 'item',
-      formatter: '{a} <br/>{b}: {c} ({d}%)'
+      formatter: (params: any) => {
+        const total = params.data.value
+        const percentage = params.percent
+        return `${params.seriesName}<br/>${params.name}: ${total}条 (${percentage}%)`
+      },
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      borderColor: '#e5e7eb',
+      borderWidth: 1,
+      textStyle: {
+        color: '#374151',
+        fontSize: 12
+      }
+    },
+    legend: {
+      show: false
     },
     series: [
       {
-        name: '告警状态',
+        name: '告警统计',
         type: 'pie',
-        radius: ['40%', '70%'],
-        avoidLabelOverlap: false,
+        radius: ['45%', '75%'],
+        center: ['50%', '50%'],
+        avoidLabelOverlap: true,
+        itemStyle: {
+          borderRadius: 4,
+          borderColor: '#fff',
+          borderWidth: 2
+        },
         label: {
-          show: false,
-          position: 'center'
+          show: true,
+          position: 'outside',
+          formatter: '{b}\n{c}条',
+          fontSize: 10,
+          color: '#6b7280',
+          lineHeight: 14
         },
         emphasis: {
+          scale: true,
+          scaleSize: 5,
+          itemStyle: {
+            shadowBlur: 10,
+            shadowOffsetX: 0,
+            shadowColor: 'rgba(0, 0, 0, 0.2)'
+          },
           label: {
-            show: true,
-            fontSize: '14',
-            fontWeight: 'bold'
+            fontSize: 11,
+            fontWeight: 'bold',
+            color: '#374151'
           }
         },
         labelLine: {
-          show: false
-        },
-        data: [
-          { 
-            value: 42, 
-            name: '异常告警',
-            itemStyle: { color: '#6366f1' }
-          },
-          { 
-            value: 58, 
-            name: '正常告警',
-            itemStyle: { color: '#10b981' }
+          show: true,
+          length: 8,
+          length2: 12,
+          lineStyle: {
+            color: '#d1d5db',
+            width: 1
           }
-        ]
+        },
+        data: getChartData(),
+        animationType: 'scale',
+        animationEasing: 'elasticOut',
+        animationDelay: (idx: number) => idx * 100
       }
     ]
   }
-  chart.setOption(option)
+  chart.setOption(option, { notMerge: true })
 }
 
 // 初始化告警级别图表
@@ -771,52 +938,143 @@ const initAlertLevelChart = () => {
   if (!alertLevelChart.value) return
   
   const chart = echarts.init(alertLevelChart.value)
+  
+  const getChartData = () => {
+    switch (alertLevelType.value) {
+      case 'level':
+        return [
+          { 
+            value: alertData.value.level.critical, 
+            name: '严重',
+            itemStyle: { color: '#dc2626' }
+          },
+          { 
+            value: alertData.value.level.warning, 
+            name: '警告',
+            itemStyle: { color: '#f59e0b' }
+          },
+          { 
+            value: alertData.value.level.info, 
+            name: '信息',
+            itemStyle: { color: '#3b82f6' }
+          }
+        ]
+      case 'region':
+        return [
+          { 
+            value: 35, 
+            name: '机房A',
+            itemStyle: { color: '#10b981' }
+          },
+          { 
+            value: 28, 
+            name: '机房B',
+            itemStyle: { color: '#3b82f6' }
+          },
+          { 
+            value: 22, 
+            name: '办公区',
+            itemStyle: { color: '#8b5cf6' }
+          },
+          { 
+            value: 15, 
+            name: '其他',
+            itemStyle: { color: '#6b7280' }
+          }
+        ]
+      case 'time':
+        return [
+          { 
+            value: 35, 
+            name: '工作时间',
+            itemStyle: { color: '#ef4444' }
+          },
+          { 
+            value: 25, 
+            name: '下班时间',
+            itemStyle: { color: '#f59e0b' }
+          },
+          { 
+            value: 40, 
+            name: '深夜时段',
+            itemStyle: { color: '#3b82f6' }
+          }
+        ]
+      default:
+        return []
+    }
+  }
+  
   const option = {
     tooltip: {
       trigger: 'item',
-      formatter: '{a} <br/>{b}: {c} ({d}%)'
+      formatter: (params: any) => {
+        const total = params.data.value
+        const percentage = params.percent
+        return `${params.seriesName}<br/>${params.name}: ${total}条 (${percentage}%)`
+      },
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      borderColor: '#e5e7eb',
+      borderWidth: 1,
+      textStyle: {
+        color: '#374151',
+        fontSize: 12
+      }
+    },
+    legend: {
+      show: false
     },
     series: [
       {
-        name: '告警级别',
+        name: '分布统计',
         type: 'pie',
-        radius: ['40%', '70%'],
-        avoidLabelOverlap: false,
+        radius: ['45%', '75%'],
+        center: ['50%', '50%'],
+        avoidLabelOverlap: true,
+        itemStyle: {
+          borderRadius: 4,
+          borderColor: '#fff',
+          borderWidth: 2
+        },
         label: {
-          show: false,
-          position: 'center'
+          show: true,
+          position: 'outside',
+          formatter: '{b}\n{c}条',
+          fontSize: 10,
+          color: '#6b7280',
+          lineHeight: 14
         },
         emphasis: {
+          scale: true,
+          scaleSize: 5,
+          itemStyle: {
+            shadowBlur: 10,
+            shadowOffsetX: 0,
+            shadowColor: 'rgba(0, 0, 0, 0.2)'
+          },
           label: {
-            show: true,
-            fontSize: '14',
-            fontWeight: 'bold'
+            fontSize: 11,
+            fontWeight: 'bold',
+            color: '#374151'
           }
         },
         labelLine: {
-          show: false
-        },
-        data: [
-          { 
-            value: 42, 
-            name: 'CPU告警',
-            itemStyle: { color: '#ff7875' }
-          },
-          { 
-            value: 42, 
-            name: '内存告警',
-            itemStyle: { color: '#ffa940' }
-          },
-          { 
-            value: 16, 
-            name: '磁盘告警',
-            itemStyle: { color: '#52c41a' }
+          show: true,
+          length: 8,
+          length2: 12,
+          lineStyle: {
+            color: '#d1d5db',
+            width: 1
           }
-        ]
+        },
+        data: getChartData(),
+        animationType: 'scale',
+        animationEasing: 'elasticOut',
+        animationDelay: (idx: number) => idx * 100
       }
     ]
   }
-  chart.setOption(option)
+  chart.setOption(option, { notMerge: true })
 }
 
 // 更新告警状态图表
@@ -829,17 +1087,56 @@ const updateAlertLevelChart = () => {
   initAlertLevelChart()
 }
 
+// 模拟告警数据更新
+const updateAlertData = () => {
+  // 模拟数据变化
+  const fluctuation = () => Math.floor(Math.random() * 10) - 5
+  
+  alertData.value.status.active = Math.max(0, alertData.value.status.active + fluctuation())
+  alertData.value.status.resolved = Math.max(0, alertData.value.status.resolved + fluctuation())
+  alertData.value.status.pending = Math.max(0, alertData.value.status.pending + fluctuation())
+  
+  alertData.value.level.critical = Math.max(0, alertData.value.level.critical + Math.floor(Math.random() * 6) - 3)
+  alertData.value.level.warning = Math.max(0, alertData.value.level.warning + fluctuation())
+  alertData.value.level.info = Math.max(0, alertData.value.level.info + fluctuation())
+  
+  alertData.value.type.cpu = Math.max(0, alertData.value.type.cpu + Math.floor(Math.random() * 4) - 2)
+  alertData.value.type.memory = Math.max(0, alertData.value.type.memory + Math.floor(Math.random() * 4) - 2)
+  alertData.value.type.disk = Math.max(0, alertData.value.type.disk + Math.floor(Math.random() * 4) - 2)
+  alertData.value.type.network = Math.max(0, alertData.value.type.network + Math.floor(Math.random() * 4) - 2)
+  
+  // 更新图表
+  initAlertStatusChart()
+  initAlertLevelChart()
+}
+
+// 启动告警数据定时更新
+let alertUpdateTimer: any = null
+const startAlertDataUpdate = () => {
+  alertUpdateTimer = setInterval(updateAlertData, 30000) // 每30秒更新一次
+}
+
+// 停止告警数据更新
+const stopAlertDataUpdate = () => {
+  if (alertUpdateTimer) {
+    clearInterval(alertUpdateTimer)
+    alertUpdateTimer = null
+  }
+}
+
 onMounted(async () => {
   await nextTick()
   initSystemChart()
   initAlertStatusChart()
   initAlertLevelChart()
   loadDeviceData()
+  startAlertDataUpdate()
 })
 
 // 组件卸载时清理定时器
 onUnmounted(() => {
   stopRealtimeUpdate()
+  stopAlertDataUpdate()
   if (chartInstance) {
     chartInstance.dispose()
     chartInstance = null
@@ -1019,20 +1316,27 @@ onUnmounted(() => {
             align-items: center;
 
             .chart-selector {
-              margin-bottom: 12px;
+              margin-bottom: 16px;
               
-              select {
-                padding: 4px 8px;
+              .chart-select {
+                padding: 8px 12px;
                 border: 1px solid #d1d5db;
-                border-radius: 4px;
+                border-radius: 6px;
                 font-size: 12px;
                 color: #374151;
                 background: white;
                 cursor: pointer;
+                min-width: 120px;
+                transition: all 0.2s ease;
                 
                 &:focus {
                   outline: none;
                   border-color: #3b82f6;
+                  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+                }
+                
+                &:hover {
+                  border-color: #9ca3af;
                 }
               }
             }
@@ -1050,35 +1354,112 @@ onUnmounted(() => {
           }
         }
 
-                 .alert-legends {
-           display: flex;
-           flex-direction: column;
-           gap: 8px;
-           margin-top: 16px;
-
-           .legend-row {
+         .alert-stats-overview {
+           margin-top: 20px;
+           
+           .stats-row {
+             display: flex;
+             gap: 16px;
+             margin-bottom: 16px;
+             
+             .stat-item {
+               flex: 1;
+               display: flex;
+               align-items: center;
+               gap: 10px;
+               background: #f8fafc;
+               padding: 12px;
+               border-radius: 8px;
+               border-left: 3px solid transparent;
+               transition: all 0.3s ease;
+               
+               &:hover {
+                 background: #f1f5f9;
+                 transform: translateY(-1px);
+               }
+               
+               .stat-icon {
+                 width: 32px;
+                 height: 32px;
+                 border-radius: 50%;
+                 display: flex;
+                 align-items: center;
+                 justify-content: center;
+                 font-size: 14px;
+                 
+                 &.critical {
+                   background: rgba(220, 38, 38, 0.1);
+                   color: #dc2626;
+                   animation: pulse-critical 2s infinite;
+                 }
+                 
+                 &.warning {
+                   background: rgba(245, 158, 11, 0.1);
+                   color: #f59e0b;
+                 }
+                 
+                 &.info {
+                   background: rgba(59, 130, 246, 0.1);
+                   color: #3b82f6;
+                 }
+               }
+               
+               .stat-content {
+                 .stat-number {
+                   font-size: 18px;
+                   font-weight: 700;
+                   margin-bottom: 2px;
+                   
+                   .stat-item:has(.critical) & {
+                     color: #dc2626;
+                   }
+                   
+                   .stat-item:has(.warning) & {
+                     color: #f59e0b;
+                   }
+                   
+                   .stat-item:has(.info) & {
+                     color: #3b82f6;
+                   }
+                 }
+                 
+                 .stat-label {
+                   font-size: 11px;
+                   color: #6b7280;
+                   font-weight: 500;
+                 }
+               }
+             }
+           }
+           
+           .trend-info {
              display: flex;
              justify-content: space-between;
              align-items: center;
+             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+             padding: 12px 16px;
+             border-radius: 8px;
+             color: white;
              
-             .legend-item {
+             .trend-item {
                display: flex;
                align-items: center;
                gap: 6px;
-               font-size: 12px;
-               color: #6b7280;
                
-               .legend-dot {
-                 width: 8px;
-                 height: 8px;
-                 border-radius: 50%;
+               .trend-label {
+                 font-size: 12px;
+                 opacity: 0.9;
                }
-             }
-             
-             .legend-percentage {
-               color: #6b7280;
-               font-size: 12px;
-               font-weight: 500;
+               
+               .trend-value {
+                 font-size: 14px;
+                 font-weight: 600;
+                 
+                 &.increase {
+                   color: #fde047;
+                   animation: glow 2s ease-in-out infinite alternate;
+                 }
+               }
              }
            }
          }
@@ -1570,6 +1951,26 @@ onUnmounted(() => {
   }
   66% {
     transform: translateY(5px) rotate(-1deg);
+  }
+}
+
+@keyframes pulse-critical {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes glow {
+  from {
+    text-shadow: 0 0 5px rgba(253, 224, 71, 0.5);
+  }
+  to {
+    text-shadow: 0 0 10px rgba(253, 224, 71, 0.8), 0 0 15px rgba(253, 224, 71, 0.5);
   }
 }
 </style> 

@@ -2,7 +2,7 @@
   <div class="desktop-management">
     <!-- 页面标题 -->
     <div class="page-header">
-      <h1 class="page-title">📋 模板 | 任务下发列表</h1>
+      <h1 class="page-title">云桌面管理</h1>
     </div>
 
     <!-- 筛选条件栏 -->

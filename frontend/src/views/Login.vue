@@ -20,25 +20,16 @@
     
     <!-- 主要内容区域 -->
     <div class="main-content">
-      <!-- 左侧欢迎区域 -->
+      <!-- 左侧图片区域 -->
       <div class="welcome-section">
-        <div class="welcome-content">
-          <div class="brand-section">
-            <div class="brand-icon">
-              <el-icon size="60"><Monitor /></el-icon>
-            </div>
-            <h1 class="brand-title">多智能体协作运维系统</h1>
-            <p class="brand-subtitle">Multi-Agent Operations Platform</p>
-          </div>
-          
-          <div class="features-grid">
-            <div class="feature-item" v-for="(feature, index) in features" :key="index">
-              <el-icon :size="24">
-                <component :is="feature.icon" />
-              </el-icon>
-              <span>{{ feature.text }}</span>
-            </div>
-          </div>
+        <!-- 标题区域 -->
+        <div class="title-section">
+          <img src="@/assets/icon/00005.png" alt="系统标题" class="title-image" />
+          <div class="subtitle-text">智能化 协同高效 安全可靠</div>
+        </div>
+        <!-- 主图片区域 -->
+        <div class="login-image-container">
+          <img src="@/assets/image/login.png" alt="登录页面" class="login-background-image" />
         </div>
       </div>
       
@@ -209,8 +200,7 @@ import { ref, reactive, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { 
-  Monitor, User, UserFilled, Lock, Right, Check, InfoFilled,
-  Setting, DataAnalysis, Connection 
+  User, UserFilled, Lock, Right, Check, InfoFilled
 } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/store/modules/auth'
 import type { LoginForm } from '@/types/user'
@@ -249,13 +239,7 @@ const roles = [
   }
 ]
 
-// 功能特性
-const features = [
-  { icon: DataAnalysis, text: '智能数据分析' },
-  { icon: Lock, text: '安全权限管理' },
-  { icon: Connection, text: '多设备协同' },
-  { icon: Setting, text: '灵活配置管理' }
-]
+
 
 // 表单验证规则
 const loginRules: FormRules = {
@@ -359,9 +343,9 @@ const handleLogin = async () => {
   background: linear-gradient(135deg, 
     #667eea 0%, 
     #764ba2 25%, 
-    #f093fb 50%, 
-    #f5576c 75%, 
-    #4facfe 100%);
+    #954d9d 50%, 
+    #764ba2 75%, 
+    #667eea 100%);
   background-size: 400% 400%;
   animation: gradientShift 15s ease infinite;
 }
@@ -440,7 +424,7 @@ const handleLogin = async () => {
     &.light-1 {
       width: 300px;
       height: 300px;
-      background: rgba(102, 126, 234, 0.3);
+      background: rgba(148, 163, 184, 0.2);
       top: 20%;
       left: 10%;
       animation-delay: 0s;
@@ -449,7 +433,7 @@ const handleLogin = async () => {
     &.light-2 {
       width: 400px;
       height: 400px;
-      background: rgba(245, 87, 108, 0.2);
+      background: rgba(203, 213, 225, 0.15);
       top: 50%;
       right: 15%;
       animation-delay: 1.5s;
@@ -458,7 +442,7 @@ const handleLogin = async () => {
     &.light-3 {
       width: 250px;
       height: 250px;
-      background: rgba(79, 172, 254, 0.25);
+      background: rgba(100, 116, 139, 0.2);
       bottom: 20%;
       left: 20%;
       animation-delay: 3s;
@@ -482,95 +466,58 @@ const handleLogin = async () => {
   min-height: 700px;
 }
 
-// 左侧欢迎区域
+// 左侧图片区域
 .welcome-section {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 60px;
+  padding: 20px;
   
-  .welcome-content {
-    max-width: 500px;
-    color: white;
-    text-align: center;
+  .title-section {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding-left: 60px;
+    margin-bottom: 20px;
+    margin-top: 40px;
     
-    .brand-section {
-      margin-bottom: 60px;
-      
-      .brand-icon {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 100px;
-        height: 100px;
-        background: rgba(255, 255, 255, 0.15);
-        backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 24px;
-        margin-bottom: 32px;
-        animation: iconFloat 3s ease-in-out infinite;
-      }
-      
-      .brand-title {
-        font-size: 40px;
-        font-weight: 800;
-        margin: 0 0 16px 0;
-        background: linear-gradient(135deg, #ffffff 0%, rgba(255,255,255,0.8) 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        text-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      }
-      
-      .brand-subtitle {
-        font-size: 18px;
-        color: rgba(255, 255, 255, 0.8);
-        margin: 0;
-        font-weight: 400;
-        letter-spacing: 1px;
-      }
+    .title-image {
+      max-width: 90%;
+      height: auto;
+      object-fit: contain;
+      transform: scale(1.2);
+      transform-origin: left center;
     }
     
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 24px;
-      
-      .feature-item {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 20px;
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 16px;
-        transition: all 0.3s ease;
-        
-        &:hover {
-          transform: translateY(-4px);
-          background: rgba(255, 255, 255, 0.15);
-          box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-        }
-        
-        .el-icon {
-          color: rgba(255, 255, 255, 0.9);
-        }
-        
-        span {
-          font-size: 14px;
-          font-weight: 500;
-          color: rgba(255, 255, 255, 0.9);
-        }
-      }
+    .subtitle-text {
+      color: white;
+      font-size: 18px;
+      font-weight: 500;
+      margin-top: 15px;
+      letter-spacing: 2px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+  }
+  
+  .login-image-container {
+    width: 100%;
+    flex: 1;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    margin-top: 30px;
+    
+    .login-background-image {
+      width: 80%;
+      height: 80%;
+      object-fit: contain;
     }
   }
 }
 
-@keyframes iconFloat {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-}
+
 
 // 右侧登录区域
 .login-section {
@@ -578,21 +525,13 @@ const handleLogin = async () => {
   align-items: center;
   justify-content: center;
   padding: 40px;
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(20px);
-  border-left: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .login-card {
   width: 100%;
   max-width: 400px;
   background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(40px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 20px;
-  box-shadow: 
-    0 24px 48px rgba(0, 0, 0, 0.1),
-    0 0 0 1px rgba(255, 255, 255, 0.05);
   overflow: hidden;
   animation: cardSlideIn 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }

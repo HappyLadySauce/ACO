@@ -79,7 +79,6 @@
           </template>
         </el-table-column>
         <el-table-column prop="create_time" label="创建时间" width="150" />
-        <el-table-column prop="update_time" label="更新时间" width="150" />
         <el-table-column label="操作" width="160" fixed="right">
           <template #default="scope">
             <el-button size="small" @click="handleEdit(scope.row)">
@@ -163,25 +162,7 @@
             <el-option label="孪生平台" value="孪生平台" />
           </el-select>
         </el-form-item>
-        <el-form-item label="执行角色" prop="assignee">
-          <el-select 
-            v-model="taskForm.assignee" 
-            placeholder="请选择执行角色"
-            style="width: 100%"
-            clearable
-            filterable
-          >
-            <el-option 
-              v-for="user in availableUsers" 
-              :key="user.id" 
-              :label="user.username" 
-              :value="user.username"
-            >
-              <span>{{ user.username }}</span>
-              <span style="float: right; color: #8492a6; font-size: 13px">{{ user.role }}</span>
-            </el-option>
-          </el-select>
-        </el-form-item>
+
       </el-form>
       
       <template #footer>
@@ -320,8 +301,7 @@ import {
   SuccessFilled, CircleCloseFilled 
 } from '@element-plus/icons-vue'
 import { getTasks, getTasksCount, createTask, updateTask, deleteTask, getTask, bulkImportTasks, type TaskBulkImportResult } from '@/api/task'
-import { getUserList } from '@/api/user'
-import type { User } from '@/types/user'
+
 
 interface Task {
   id: number
@@ -357,7 +337,6 @@ const taskForm = reactive({
   type: '',
   phase: '',
   description: '',
-  assignee: '',
   role_binding: ''
 })
 
@@ -368,7 +347,6 @@ const pagination = reactive({
 })
 
 const tasks = ref<Task[]>([])
-const availableUsers = ref<User[]>([])
 
 const importResult = reactive<TaskBulkImportResult>({
   success_count: 0,
@@ -392,9 +370,7 @@ const rules = {
     { required: true, message: '请输入任务描述', trigger: 'blur' },
     { min: 5, max: 500, message: '任务描述长度在 5 到 500 个字符', trigger: 'blur' }
   ],
-  assignee: [
-    { required: false, message: '请选择执行角色', trigger: 'change' }
-  ]
+
 }
 
 const loadTasks = async () => {
@@ -485,7 +461,6 @@ const handleSubmit = async () => {
         type: taskForm.type,
         phase: taskForm.phase,
         description: taskForm.description,
-        assignee: taskForm.assignee,
         role_binding: taskForm.role_binding
       })
     } else {
@@ -495,7 +470,6 @@ const handleSubmit = async () => {
         phase: taskForm.phase,
         description: taskForm.description,
         status: '未分配',
-        assignee: taskForm.assignee,
         role_binding: taskForm.role_binding
       })
     }
@@ -515,7 +489,6 @@ const resetForm = () => {
   taskForm.type = ''
   taskForm.phase = ''
   taskForm.description = ''
-  taskForm.assignee = ''
   taskForm.role_binding = ''
 }
 
@@ -541,11 +514,11 @@ const downloadTemplate = async () => {
   try {
     // 创建CSV内容，包含标题行和示例数据
     const csvData = [
-      ['任务名称', '任务类型', '阶段', '任务描述', '绑定角色', '执行角色'],
-      ['网络架构设计', '网络搭建任务', '计划阶段', '设计企业网络拓扑结构和配置方案', '网络工程师', 'admin'],
-      ['服务器环境搭建', '系统构建任务', '执行阶段', '搭建生产环境服务器和应用系统', '系统架构工程师', 'operator1'],
-      ['监控系统配置', '运维监管任务', '配置阶段', '配置系统监控和告警机制', '数据运维工程师', ''],
-      ['日志安全审计', '日志安全任务', '监控阶段', '分析系统日志并识别安全威胁', '系统分析师', 'admin']
+      ['任务名称', '任务类型', '阶段', '任务描述', '绑定角色'],
+      ['网络架构设计', '网络搭建任务', '计划阶段', '设计企业网络拓扑结构和配置方案', '网络工程师'],
+      ['服务器环境搭建', '系统构建任务', '执行阶段', '搭建生产环境服务器和应用系统', '系统架构工程师'],
+      ['监控系统配置', '运维监管任务', '配置阶段', '配置系统监控和告警机制', '数据运维工程师'],
+      ['日志安全审计', '日志安全任务', '监控阶段', '分析系统日志并识别安全威胁', '系统分析师']
     ]
     
     // 将数组转换为CSV格式字符串
@@ -669,20 +642,8 @@ const handleImport = async () => {
   }
 }
 
-// 加载可用用户列表
-const loadAvailableUsers = async () => {
-  try {
-    const response = await getUserList({ limit: 100 })
-    availableUsers.value = response.data?.filter(user => user.status === 'active') || []
-  } catch (error) {
-    console.error('加载用户列表失败:', error)
-    ElMessage.error('加载用户列表失败')
-  }
-}
-
 onMounted(() => {
   loadTasks()
-  loadAvailableUsers()
 })
 </script>
 

@@ -418,15 +418,15 @@ async def download_user_template():
     worksheet.title = "用户导入模板"
     
     # 设置表头
-    headers = ['用户名', '密码', '角色', '用户类型', '状态']
+    headers = ['用户名', '密码', '角色', '用户类型', '状态', '照片路径']
     for col, header in enumerate(headers, 1):
         worksheet.cell(row=1, column=col, value=header)
     
     # 添加示例数据
     sample_data = [
-        ['user1', '123456', '网络工程师', '操作员', 'active'],
-        ['user2', '123456', '系统架构师', '操作员', 'active'],
-        ['user3', '123456', '系统规划与管理师', '管理员', 'active']
+        ['user1', '123456', '网络工程师', '操作员', 'active', '/images/user1.jpg'],
+        ['user2', '123456', '系统架构师', '操作员', 'active', '/images/user2.jpg'],
+        ['user3', '123456', '系统规划与管理师', '管理员', 'active', '/images/user3.jpg']
     ]
     
     for row_idx, row_data in enumerate(sample_data, 2):

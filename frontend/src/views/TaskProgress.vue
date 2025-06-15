@@ -28,7 +28,7 @@
             <el-select v-model="searchForm.status" placeholder="选择状态" clearable>
               <el-option label="进行中" value="进行中" />
               <el-option label="已完成" value="已完成" />
-              <el-option label="已暂停" value="已暂停" />
+              <el-option label="未下发" value="未下发" />
             </el-select>
           </el-form-item>
           <el-form-item label="时间范围">
@@ -134,7 +134,7 @@
             <template #default="scope">
               <el-progress 
                 :percentage="scope.row.progress" 
-                :status="scope.row.progress === 100 ? 'success' : (scope.row.status === '已暂停' ? 'exception' : '')"
+                :status="scope.row.progress === 100 ? 'success' : (scope.row.status === '未下发' ? 'exception' : '')"
                 :stroke-width="8"
               />
             </template>
@@ -302,7 +302,7 @@
           <el-select v-model="progressManagementForm.status" placeholder="选择状态">
             <el-option label="进行中" value="进行中" />
             <el-option label="已完成" value="已完成" />
-            <el-option label="已暂停" value="已暂停" />
+            <el-option label="未下发" value="未下发" />
           </el-select>
         </el-form-item>
         <el-form-item label="进度" prop="progress">
@@ -449,7 +449,7 @@ const getStatusType = (status: string) => {
       return 'success'
     case '进行中':
       return 'warning'
-    case '已暂停':
+    case '未下发':
       return 'danger'
     default:
       return ''
@@ -591,7 +591,7 @@ const initCharts = () => {
       const statusData = [
         { value: stats.value.inProgress, name: '进行中' },
         { value: stats.value.completed, name: '已完成' },
-        { value: progressList.value.filter(item => item.status === '已暂停').length, name: '已暂停' }
+        { value: progressList.value.filter(item => item.status === '未下发').length, name: '未下发' }
       ]
       
       statusChart.setOption({

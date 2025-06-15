@@ -80,7 +80,7 @@
       <nav class="sidebar-nav">
         <div class="nav-item" :class="{ active: $route.path === '/dashboard' }" @click="$router.push('/dashboard')">
           <img src="@/assets/icon/首页.png" alt="首页" class="nav-icon-img" />
-          <span class="nav-text">系统仪表板</span>
+          <span class="nav-text">首页</span>
         </div>
         
         <div 

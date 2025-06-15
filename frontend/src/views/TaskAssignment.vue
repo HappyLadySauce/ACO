@@ -13,7 +13,7 @@
               <div class="role-selector">
                 <el-select
                   v-model="selectedRole"
-                  placeholder="选择角色过滤"
+                  placeholder="选择角色任务"
                   clearable
                   @change="handleRoleChange"
                   style="width: 200px"
@@ -114,8 +114,7 @@
                 >
                   <el-checkbox :model-value="checkedAvailableUsers.includes(user.username)" />
                   <div class="user-card-inline">
-                    <div class="user-name">{{ user.username }}</div>
-                    <div class="user-role">{{ user.role }}</div>
+                    <div class="user-display">{{ user.username }}（{{ user.role }}）</div>
                   </div>
                 </div>
                 <div v-if="availableUsers.length === 0 && !userLoading" class="empty-state">
@@ -152,8 +151,7 @@
                   title="点击移除用户"
                 >
                   <div class="user-card-inline">
-                    <div class="user-name">{{ user.username }}</div>
-                    <div class="user-role">{{ user.role }}</div>
+                    <div class="user-display">{{ user.username }}（{{ user.role }}）</div>
                   </div>
                   <el-icon class="remove-icon"><Close /></el-icon>
                 </div>
@@ -664,19 +662,11 @@ onMounted(() => {
                   padding: 4px 8px;
                   color: white;
                   
-                  .user-name {
+                  .user-display {
                     font-weight: 600;
                     font-size: 12px;
-                    margin-bottom: 1px;
-                  }
-                  
-                  .user-role {
-                    font-size: 10px;
-                    opacity: 0.9;
-                    background: rgba(255, 255, 255, 0.2);
-                    border-radius: 3px;
-                    padding: 1px 4px;
                     text-align: center;
+                    line-height: 1.3;
                   }
                 }
 

@@ -39,7 +39,7 @@ const routes = [
         component: () => import('@/views/Dashboard.vue'),
         meta: { 
           requiresAuth: true,
-          title: '系统仪表板'
+          title: '首页'
         }
       },
       {

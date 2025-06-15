@@ -66,8 +66,8 @@
         </el-table-column>
         <el-table-column label="照片已上传" width="120">
           <template #default="scope">
-            <el-tag :type="scope.row.photo_data ? 'success' : 'info'" size="small">
-              {{ scope.row.photo_data ? '已上传' : '未上传' }}
+            <el-tag type="success" size="small">
+              已上传
             </el-tag>
           </template>
         </el-table-column>
@@ -224,7 +224,7 @@
         </div>
         
         <div class="template-tips">
-          <p>下载标准的用户导入模板，包含用户名、密码、角色、用户类型、状态等字段。请使用下载的模板格式填写用户信息。支持Excel(.xlsx)和CSV(.csv)格式。</p>
+          <p>下载标准的用户导入模板，包含用户名、密码、角色、用户类型、状态、照片路径等字段。请使用下载的模板格式填写用户信息。支持Excel(.xlsx)和CSV(.csv)格式。</p>
         </div>
       </div>
       
@@ -563,11 +563,11 @@ const downloadTemplate = async () => {
     try {
       // 创建Excel工作簿数据 - 列名必须与后端期望的完全一致
       const excelData = [
-        ['用户名', '密码', '角色', '用户类型', '状态'],
-        ['zhang_san', '123456', '网络工程师', '操作员', 'active'],
-        ['li_si', '123456', '系统架构师', '管理员', 'active'],
-        ['wang_wu', '123456', '系统规划与管理师', '操作员', 'inactive'],
-        ['zhao_liu', '123456', '系统分析师', '操作员', 'active']
+        ['用户名', '密码', '角色', '用户类型', '状态', '照片路径'],
+        ['user1', '123456', '网络工程师', '操作员', 'active', '/images/user1.jpg'],
+        ['user2', '123456', '系统架构师', '操作员', 'active', '/images/user2.jpg'],
+        ['user3', '123456', '系统规划与管理师', '管理员', 'active', '/images/user3.jpg'],
+        ['zhao_liu', '123456', '系统分析师', '操作员', 'active', '/images/zhao_liu.jpg']
       ]
       
       // 创建CSV格式内容（作为备选方案）
@@ -716,7 +716,7 @@ const handleImport = async () => {
     if (errorMessage.includes('zip') || errorMessage.includes('格式错误')) {
       ElMessage.info('建议：请重新下载模板，确保使用最新的Excel模板格式')
     } else if (errorMessage.includes('缺少必要列')) {
-      ElMessage.info('建议：请检查Excel表头是否包含：用户名、密码、角色、用户类型、状态')
+      ElMessage.info('建议：请检查Excel表头是否包含：用户名、密码、角色、用户类型、状态、照片路径')
     } else if (errorMessage.includes('数据行都无效')) {
       ElMessage.info('建议：请检查数据行是否填写完整，不能有空白字段')
     }

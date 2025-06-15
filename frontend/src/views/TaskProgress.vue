@@ -169,7 +169,7 @@
                 type="primary" 
                 @click="handleUpdateProgress(scope.row)"
               >
-                更新进度
+                修改进度
               </el-button>
             </template>
           </el-table-column>
@@ -193,39 +193,89 @@
     <!-- 任务详情对话框 -->
     <el-dialog
       v-model="detailDialogVisible"
-      title="任务详情"
+      title="任务进度管理"
       width="800px"
+      :close-on-click-modal="false"
     >
-      <div v-if="currentTask" class="task-detail">
-        <el-descriptions :column="2" border>
-          <el-descriptions-item label="任务ID">{{ currentTask.id }}</el-descriptions-item>
-          <el-descriptions-item label="任务名称">{{ currentTask.task_name }}</el-descriptions-item>
-          <el-descriptions-item label="任务类型">{{ currentTask.task_type }}</el-descriptions-item>
-          <el-descriptions-item label="执行角色">{{ currentTask.username }}</el-descriptions-item>
-          <el-descriptions-item label="状态">
-            <el-tag :type="getStatusType(currentTask.status)">
-              {{ currentTask.status }}
-            </el-tag>
-          </el-descriptions-item>
-          <el-descriptions-item label="进度">
-            <el-progress :percentage="currentTask.progress" />
-          </el-descriptions-item>
-          <el-descriptions-item label="绩效评分">
-            <el-rate v-model="currentTask.performance_score" :max="5" disabled show-score />
-          </el-descriptions-item>
-          <el-descriptions-item label="分配时间">{{ currentTask.assigned_at }}</el-descriptions-item>
-          <el-descriptions-item label="最后更新">{{ currentTask.last_update }}</el-descriptions-item>
-          <el-descriptions-item label="备注说明" :span="2">
-            {{ currentTask.comments || '暂无备注' }}
-          </el-descriptions-item>
-        </el-descriptions>
+      <div v-if="currentTask" class="task-detail-container">
+        <!-- 任务基本信息 -->
+        <div class="task-header">
+          <div class="task-number">
+            <span class="label">任务名称:</span>
+            <span class="value">{{ currentTask.task_name }}</span>
+          </div>
+        </div>
+
+        <!-- 任务描述 -->
+        <div class="task-description">
+          <label>任务描述</label>
+          <el-input 
+            v-model="currentTask.task_name"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入任务描述"
+          />
+          <div class="description-text">
+            将全网设备接入INC进行统一管理，构建区域控制，并下发安全配置
+          </div>
+        </div>
+
+        <!-- 进度信息 -->
+        <div class="progress-section">
+          <div class="progress-item">
+            <span class="progress-label">总体进度</span>
+            <div class="progress-bar">
+              <el-progress 
+                :percentage="currentTask.progress" 
+                :color="getProgressColor(currentTask.progress)"
+                :stroke-width="20"
+              />
+              <span class="progress-text">进度{{ currentTask.progress }}%</span>
+              <span class="performance-text">平均绩效: {{ Math.round(currentTask.performance_score * 920) }}万</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 任务详情表格 -->
+        <div class="task-details-table">
+          <div class="table-header">
+            <div class="header-cell">任务ID</div>
+            <div class="header-cell">任务类型</div>
+            <div class="header-cell">任务类型</div>
+            <div class="header-cell">阶段任务</div>
+            <div class="header-cell">任务描述</div>
+            <div class="header-cell">执行角色</div>
+          </div>
+          <div class="table-body">
+            <div class="table-row">
+              <div class="table-cell">{{ currentTask.task_id }}</div>
+              <div class="table-cell">{{ currentTask.task_type }}</div>
+              <div class="table-cell">{{ currentTask.task_type }}</div>
+              <div class="table-cell">执行阶段</div>
+              <div class="table-cell">{{ currentTask.task_name }}</div>
+              <div class="table-cell">
+                <div class="role-card">
+                  <span class="role-name">{{ currentTask.username }}</span>
+                  <span class="role-type">系统分析师</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 底部操作按钮 -->
+        <div class="bottom-actions">
+          <el-button type="primary" size="large">最新进度</el-button>
+          <el-button size="large">更新绩效</el-button>
+          <el-button size="large">刷新数据</el-button>
+        </div>
       </div>
     </el-dialog>
 
     <!-- 更新进度对话框 -->
     <el-dialog
       v-model="updateDialogVisible"
-      title="更新任务进度"
+      title="修改任务进度"
       width="600px"
     >
       <el-form
@@ -252,7 +302,7 @@
             v-model="updateForm.progress" 
             :max="100" 
             show-input 
-            :format-tooltip="(val) => `${val}%`"
+            :format-tooltip="(val: number) => `${val}%`"
           />
         </el-form-item>
         <el-form-item label="绩效评分" prop="performance_score">
@@ -381,6 +431,16 @@ const getStatusType = (status: string) => {
       return 'danger'
     default:
       return ''
+  }
+}
+
+const getProgressColor = (percentage: number) => {
+  if (percentage < 30) {
+    return '#f56c6c'
+  } else if (percentage < 70) {
+    return '#e6a23c'
+  } else {
+    return '#67c23a'
   }
 }
 
@@ -727,6 +787,165 @@ onMounted(() => {
   .task-detail {
     .el-descriptions {
       margin-top: 20px;
+    }
+  }
+}
+
+.task-detail-container {
+  padding: 20px;
+  
+  .task-header {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 8px;
+    
+    .task-number {
+      font-size: 18px;
+      .label {
+        font-weight: bold;
+      }
+      .value {
+        margin-left: 10px;
+      }
+    }
+  }
+
+  .task-description {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #333;
+    }
+    
+    .description-text {
+      margin-top: 10px;
+      padding: 10px;
+      background: white;
+      border-radius: 4px;
+      color: #666;
+      font-size: 14px;
+    }
+  }
+
+  .progress-section {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    
+    .progress-item {
+      .progress-label {
+        display: block;
+        margin-bottom: 10px;
+        font-weight: 500;
+        color: #333;
+      }
+      
+      .progress-bar {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        
+        .el-progress {
+          flex: 1;
+        }
+        
+        .progress-text {
+          font-weight: bold;
+          color: #409eff;
+          min-width: 80px;
+        }
+        
+        .performance-text {
+          font-weight: bold;
+          color: #67c23a;
+          min-width: 120px;
+        }
+      }
+    }
+  }
+
+  .task-details-table {
+    margin-bottom: 20px;
+    border: 1px solid #e4e7ed;
+    border-radius: 8px;
+    overflow: hidden;
+    
+    .table-header {
+      display: flex;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      
+      .header-cell {
+        flex: 1;
+        padding: 12px;
+        font-weight: bold;
+        text-align: center;
+        border-right: 1px solid rgba(255, 255, 255, 0.2);
+        
+        &:last-child {
+          border-right: none;
+        }
+      }
+    }
+    
+    .table-body {
+      .table-row {
+        display: flex;
+        background: white;
+        
+        .table-cell {
+          flex: 1;
+          padding: 12px;
+          text-align: center;
+          border-right: 1px solid #e4e7ed;
+          
+          &:last-child {
+            border-right: none;
+          }
+          
+          .role-card {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 6px;
+            
+            .role-name {
+              font-weight: bold;
+              margin-bottom: 2px;
+            }
+            
+            .role-type {
+              font-size: 12px;
+              opacity: 0.9;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .bottom-actions {
+    margin-top: 30px;
+    text-align: center;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    
+    .el-button {
+      margin: 0 10px;
+      min-width: 120px;
     }
   }
 }

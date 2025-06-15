@@ -660,7 +660,7 @@ async def update_my_task(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """更新我的任务进度"""
+    """更新我的任务进度（管理员可以更新所有用户的任务）"""
     # 获取现有分配
     existing_assignment = TaskAssignmentService.get_assignment(db=db, assignment_id=assignment_id)
     if not existing_assignment:
@@ -669,8 +669,8 @@ async def update_my_task(
             detail="任务分配不存在"
         )
     
-    # 检查权限（只能更新自己的任务）
-    if current_user.id != existing_assignment.user_id:
+    # 检查权限（用户只能更新自己的任务，管理员可以更新所有任务）
+    if current_user.type != "管理员" and current_user.id != existing_assignment.user_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="无权更新其他用户的任务"

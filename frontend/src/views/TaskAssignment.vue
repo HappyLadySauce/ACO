@@ -9,12 +9,29 @@
           <template #header>
             <div class="card-header">
               <span>🔖 任务下发列表</span>
+              <!-- 角色选择器 -->
+              <div class="role-selector">
+                <el-select
+                  v-model="selectedRole"
+                  placeholder="选择角色过滤"
+                  clearable
+                  @change="handleRoleChange"
+                  style="width: 200px"
+                >
+                  <el-option label="全部任务" value="" />
+                  <el-option label="系统分析师" value="系统分析师" />
+                  <el-option label="网络工程师" value="网络工程师" />
+                  <el-option label="系统架构工程师" value="系统架构工程师" />
+                  <el-option label="数据运维工程师" value="数据运维工程师" />
+                  <el-option label="孪生平台" value="孪生平台" />
+                </el-select>
+              </div>
             </div>
           </template>
           
           <div class="task-list">
             <el-table 
-              :data="availableTasks" 
+              :data="filteredTasks" 
               v-loading="loading"
               @current-change="handleTaskSelection"
               highlight-current-row
@@ -22,9 +39,14 @@
               style="width: 100%"
             >
               <el-table-column prop="id" label="任务ID" width="80" />
-              <el-table-column prop="name" label="任务名称" min-width="200" show-overflow-tooltip />
+              <el-table-column prop="name" label="任务名称" min-width="180" show-overflow-tooltip />
               <el-table-column prop="type" label="任务类型" width="120" />
               <el-table-column prop="phase" label="阶段任务" width="120" />
+              <el-table-column prop="status" label="任务状态" width="100">
+                <template #default="{ row }">
+                  <el-tag :type="getStatusType(row.status || '未分配')">{{ row.status || '未分配' }}</el-tag>
+                </template>
+              </el-table-column>
             </el-table>
           </div>
         </el-card>
@@ -42,30 +64,8 @@
             <div v-if="selectedTask" class="detail-content">
               <div class="detail-grid">
                 <div class="detail-item">
-                  <label class="detail-label">任务名称</label>
-                  <div class="detail-value">{{ selectedTask.name }}</div>
-                </div>
-                <div class="detail-item">
-                  <label class="detail-label">任务类型</label>
-                  <div class="detail-value">{{ selectedTask.type }}</div>
-                </div>
-                <div class="detail-item">
-                  <label class="detail-label">任务阶段</label>
-                  <div class="detail-value">{{ selectedTask.phase }}</div>
-                </div>
-                <div class="detail-item">
-                  <label class="detail-label">任务状态</label>
-                  <div class="detail-value">
-                    <el-tag :type="getStatusType((selectedTask as any).status || '未分配')">{{ (selectedTask as any).status || '未分配' }}</el-tag>
-                  </div>
-                </div>
-                <div class="detail-item">
                   <label class="detail-label">创建时间</label>
                   <div class="detail-value">{{ formatDate(selectedTask.create_time) }}</div>
-                </div>
-                <div class="detail-item">
-                  <label class="detail-label">更新时间</label>
-                  <div class="detail-value">{{ formatDate(selectedTask.update_time) }}</div>
                 </div>
                 <div class="detail-item detail-description">
                   <label class="detail-label">任务描述</label>
@@ -169,7 +169,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Check, ArrowRight, ArrowLeft, Document, InfoFilled, Close } from '@element-plus/icons-vue'
 import { getTasks, createTaskAssignment } from '@/api/task'
@@ -187,6 +187,17 @@ const selectedTask = ref<Task | null>(null)
 const selectedUsers = ref<User[]>([])
 const checkedAvailableUsers = ref<string[]>([])
 const checkedSelectedUsers = ref<string[]>([])
+const selectedRole = ref<string>('')
+
+// 根据角色过滤任务
+const filteredTasks = computed(() => {
+  if (!selectedRole.value) {
+    return availableTasks.value
+  }
+  return availableTasks.value.filter(task => 
+    task.role_binding === selectedRole.value
+  )
+})
 
 // 工具函数
 const getStatusType = (status: string) => {
@@ -250,6 +261,11 @@ const loadAvailableUsers = async () => {
 
 const handleTaskSelection = (currentRow: Task | null) => {
   selectedTask.value = currentRow
+}
+
+const handleRoleChange = () => {
+  // 当角色改变时，清除当前选中的任务
+  selectedTask.value = null
 }
 
 const toggleUser = (user: User, type: 'available' | 'selected') => {
@@ -380,8 +396,15 @@ onMounted(() => {
         .card-header {
           display: flex;
           align-items: center;
+          justify-content: space-between;
           font-weight: 500;
           font-size: 16px;
+
+          .role-selector {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+          }
         }
 
         .task-list {
@@ -390,7 +413,7 @@ onMounted(() => {
       }
 
       .task-detail-card {
-        flex: 0 0 320px;
+        flex: 0 0 200px;
 
         .card-header {
           display: flex;
@@ -401,7 +424,7 @@ onMounted(() => {
         }
 
         .task-detail {
-          height: 280px;
+          height: 160px;
           overflow-y: auto;
           
           &::-webkit-scrollbar {
@@ -425,7 +448,7 @@ onMounted(() => {
           .detail-content {
             .detail-grid {
               display: grid;
-              grid-template-columns: 1fr 1fr;
+              grid-template-columns: 1fr;
               gap: 12px;
 
               .detail-item {

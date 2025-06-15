@@ -431,15 +431,15 @@ onMounted(() => {
 
   .assignment-layout {
     display: flex;
-    gap: 12px;
+    gap: 14px;
     height: 100%;
-    padding: 12px;
+    padding: 14px;
 
     .left-panel {
       width: 60%;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 14px;
 
       .task-card {
         flex: 1;
@@ -470,7 +470,7 @@ onMounted(() => {
             background: #e6f7ff;
             border: 1px solid #91d5ff;
             border-radius: 4px;
-            padding: 8px 12px;
+            padding: 8px 14px;
             display: flex;
             align-items: center;
             gap: 8px;
@@ -486,7 +486,7 @@ onMounted(() => {
               padding: 0;
               margin-left: auto;
               color: #1890ff;
-              font-size: 12px;
+              font-size: 14px;
             }
           }
         }
@@ -529,7 +529,7 @@ onMounted(() => {
             .detail-grid {
               display: grid;
               grid-template-columns: 1fr;
-              gap: 12px;
+              gap: 14px;
 
               .detail-item {
                 &.detail-description {
@@ -588,7 +588,7 @@ onMounted(() => {
       width: 40%;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 14px;
 
       .user-selection-card {
         flex: 1;
@@ -617,7 +617,7 @@ onMounted(() => {
               margin-bottom: 10px;
               font-weight: 500;
               color: #333;
-              font-size: 13px;
+              font-size: 15px;
             }
 
             .user-list {
@@ -649,7 +649,7 @@ onMounted(() => {
                 padding: 8px 10px;
                 cursor: pointer;
                 border-bottom: 1px solid #f0f0f0;
-                font-size: 13px;
+                font-size: 15px;
 
                 &:hover {
                   background: #f5f7fa;
@@ -664,7 +664,7 @@ onMounted(() => {
                   
                   .user-display {
                     font-weight: 600;
-                    font-size: 12px;
+                    font-size: 14px;
                     text-align: center;
                     line-height: 1.3;
                   }
@@ -689,7 +689,7 @@ onMounted(() => {
                   
                   .remove-icon {
                     color: #d9d9d9;
-                    font-size: 12px;
+                    font-size: 14px;
                     transition: color 0.2s ease;
                     
                     &:hover {
@@ -761,13 +761,13 @@ onMounted(() => {
 }
 
 :deep(.el-card__header) {
-  padding: 12px 16px;
+  padding: 14px 16px;
   background: #fafafa;
   border-bottom: 1px solid #ebeef5;
 }
 
 :deep(.el-card__body) {
-  padding: 12px 16px;
+  padding: 14px 16px;
 }
 
 :deep(.el-table .el-table__header th) {

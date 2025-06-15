@@ -24,6 +24,7 @@ async def get_tasks(
     limit: int = Query(100, ge=1, le=1000, description="限制返回的记录数"),
     status: Optional[str] = Query(None, description="任务状态过滤"),
     task_type: Optional[str] = Query(None, description="任务类型过滤"),
+    role_binding: Optional[str] = Query(None, description="绑定角色过滤"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -33,7 +34,8 @@ async def get_tasks(
         skip=skip, 
         limit=limit, 
         status=status, 
-        task_type=task_type
+        task_type=task_type,
+        role_binding=role_binding
     )
     return tasks
 
@@ -41,12 +43,30 @@ async def get_tasks(
 async def get_tasks_count(
     status: Optional[str] = Query(None, description="任务状态过滤"),
     task_type: Optional[str] = Query(None, description="任务类型过滤"),
+    role_binding: Optional[str] = Query(None, description="绑定角色过滤"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """获取任务总数"""
-    count = TaskService.get_tasks_count(db=db, status=status, task_type=task_type)
+    count = TaskService.get_tasks_count(db=db, status=status, task_type=task_type, role_binding=role_binding)
     return {"count": count}
+
+@router.get("/tasks/by-role/{role_name}", response_model=List[Task])
+async def get_tasks_by_role(
+    role_name: str,
+    skip: int = Query(0, ge=0, description="跳过的记录数"),
+    limit: int = Query(100, ge=1, le=1000, description="限制返回的记录数"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """根据角色获取任务列表"""
+    tasks = TaskService.get_tasks(
+        db=db, 
+        skip=skip, 
+        limit=limit, 
+        role_binding=role_name
+    )
+    return tasks
 
 @router.get("/tasks/{task_id}", response_model=TaskWithAssignments)
 async def get_task(
@@ -77,7 +97,32 @@ async def create_task(
             detail="只有管理员可以创建任务"
         )
     
+    # 创建任务
     db_task = TaskService.create_task(db=db, task=task)
+    
+    # 如果指定了执行角色，创建任务分配
+    if task.assignee:
+        # 查找用户
+        assignee_user = db.query(User).filter(User.username == task.assignee).first()
+        if assignee_user:
+            # 创建任务分配
+            assignment_data = TaskAssignmentCreate(
+                task_id=db_task.id,
+                user_id=assignee_user.id,
+                username=task.assignee,
+                status='进行中'
+            )
+            TaskAssignmentService.create_assignment(db=db, assignment=assignment_data)
+            # 更新任务状态为已分配
+            db_task.status = '已分配'
+            db.commit()
+        else:
+            # 执行角色不存在时的处理
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"执行角色 '{task.assignee}' 不存在"
+            )
+    
     return db_task
 
 @router.put("/tasks/{task_id}", response_model=Task)
@@ -204,6 +249,7 @@ async def bulk_import_tasks(
             
             # 验证必要的列
             required_columns = ['任务名称', '任务类型', '阶段', '任务描述']
+            optional_columns = ['执行角色', '绑定角色']
             missing_columns = [col for col in required_columns if col not in headers]
             if missing_columns:
                 raise HTTPException(
@@ -213,6 +259,10 @@ async def bulk_import_tasks(
             
             # 获取列索引
             column_indexes = {col: headers.index(col) for col in required_columns}
+            # 添加可选列索引
+            for col in optional_columns:
+                if col in headers:
+                    column_indexes[col] = headers.index(col)
             
             # 转换为TaskCreate对象列表
             tasks_to_create = []
@@ -228,6 +278,13 @@ async def bulk_import_tasks(
                     task_type = row[column_indexes['任务类型']].strip() if len(row) > column_indexes['任务类型'] and row[column_indexes['任务类型']] else ""
                     task_phase = row[column_indexes['阶段']].strip() if len(row) > column_indexes['阶段'] and row[column_indexes['阶段']] else ""
                     task_description = row[column_indexes['任务描述']].strip() if len(row) > column_indexes['任务描述'] and row[column_indexes['任务描述']] else ""
+                    task_assignee = ""
+                    if '执行角色' in column_indexes and len(row) > column_indexes['执行角色'] and row[column_indexes['执行角色']]:
+                        task_assignee = row[column_indexes['执行角色']].strip()
+                    
+                    task_role_binding = ""
+                    if '绑定角色' in column_indexes and len(row) > column_indexes['绑定角色'] and row[column_indexes['绑定角色']]:
+                        task_role_binding = row[column_indexes['绑定角色']].strip()
                     
                     # 验证必填字段
                     if not task_name:
@@ -248,7 +305,9 @@ async def bulk_import_tasks(
                         type=task_type,
                         phase=task_phase,
                         description=task_description,
-                        status='未分配'
+                        status='未分配',
+                        assignee=task_assignee if task_assignee else None,
+                        role_binding=task_role_binding if task_role_binding else None
                     )
                     tasks_to_create.append(task_create)
                     
@@ -299,6 +358,7 @@ async def bulk_import_tasks(
             
             # 验证必要的列
             required_columns = ['任务名称', '任务类型', '阶段', '任务描述']
+            optional_columns = ['执行角色', '绑定角色']
             missing_columns = [col for col in required_columns if col not in headers]
             if missing_columns:
                 raise HTTPException(
@@ -308,6 +368,10 @@ async def bulk_import_tasks(
             
             # 获取列索引
             column_indexes = {col: headers.index(col) for col in required_columns}
+            # 添加可选列索引
+            for col in optional_columns:
+                if col in headers:
+                    column_indexes[col] = headers.index(col)
             
             # 转换为TaskCreate对象列表
             tasks_to_create = []
@@ -323,6 +387,13 @@ async def bulk_import_tasks(
                     task_type = str(row[column_indexes['任务类型']]).strip() if row[column_indexes['任务类型']] else ""
                     task_phase = str(row[column_indexes['阶段']]).strip() if row[column_indexes['阶段']] else ""
                     task_description = str(row[column_indexes['任务描述']]).strip() if row[column_indexes['任务描述']] else ""
+                    task_assignee = ""
+                    if '执行角色' in column_indexes and row[column_indexes['执行角色']]:
+                        task_assignee = str(row[column_indexes['执行角色']]).strip()
+                    
+                    task_role_binding = ""
+                    if '绑定角色' in column_indexes and row[column_indexes['绑定角色']]:
+                        task_role_binding = str(row[column_indexes['绑定角色']]).strip()
                     
                     # 验证必填字段
                     if not task_name:
@@ -343,7 +414,9 @@ async def bulk_import_tasks(
                         type=task_type,
                         phase=task_phase,
                         description=task_description,
-                        status='未分配'
+                        status='未分配',
+                        assignee=task_assignee if task_assignee else None,
+                        role_binding=task_role_binding if task_role_binding else None
                     )
                     tasks_to_create.append(task_create)
                     

@@ -81,21 +81,21 @@
         </el-card>
       </div>
 
-      <!-- 右侧：执行人选择区域 -->
+      <!-- 右侧：执行角色选择区域 -->
       <div class="right-panel">
-        <!-- 选择执行人 -->
+        <!-- 选择执行角色 -->
         <el-card shadow="never" class="user-selection-card">
           <template #header>
             <div class="card-header">
-              <span>👥 选择执行人</span>
+              <span>👥 选择执行角色</span>
             </div>
           </template>
 
           <div class="user-selection">
-            <!-- 可选执行人（左侧） -->
+            <!-- 可选执行角色（左侧） -->
             <div class="available-users-section">
               <div class="section-header">
-                <span>选择执行人 ({{ availableUsers.length }}/20 项)</span>
+                <span>选择执行角色 ({{ availableUsers.length }}/20 项)</span>
               </div>
               <div class="user-list available" :class="{ loading: userLoading }">
                 <div 
@@ -126,11 +126,11 @@
               </el-button>
             </div>
 
-            <!-- 已选执行人（右侧） -->
+            <!-- 已选执行角色（右侧） -->
             <div class="selected-users-section">
               <div class="section-header">
                 <el-icon><Check /></el-icon>
-                <span>已选执行人 ({{ selectedUsers.length }}/20 项)</span>
+                <span>已选执行角色 ({{ selectedUsers.length }}/20 项)</span>
               </div>
               <div class="user-list selected">
                 <div 
@@ -144,7 +144,7 @@
                   <el-icon class="remove-icon"><Close /></el-icon>
                 </div>
                 <div v-if="selectedUsers.length === 0" class="empty-state">
-                  已分配执行人 (0 项)
+                  已分配执行角色 (0 项)
                 </div>
               </div>
             </div>
@@ -304,13 +304,13 @@ const handleAssignTasks = async () => {
   }
   
   if (selectedUsers.value.length === 0) {
-    ElMessage.warning('请选择执行人')
+    ElMessage.warning('请选择执行角色')
     return
   }
 
   try {
     await ElMessageBox.confirm(
-      `确定要将任务 "${selectedTask.value.name}" 分配给 ${selectedUsers.value.length} 个执行人吗？`,
+      `确定要将任务 "${selectedTask.value.name}" 分配给 ${selectedUsers.value.length} 个执行角色吗？`,
       '确认分配',
       {
         confirmButtonText: '确定',

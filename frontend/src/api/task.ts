@@ -7,6 +7,7 @@ export interface Task {
   phase: string
   description: string
   status: string
+  role_binding?: string
   create_time: string
   update_time: string
 }
@@ -45,6 +46,8 @@ export interface TaskForm {
   phase: string
   description: string
   status?: string
+  assignee?: string
+  role_binding?: string
 }
 
 // 批量导入结果
@@ -61,6 +64,11 @@ export interface TaskBulkImportResult {
 // 获取任务列表
 export const getTasks = (params?: any) => {
   return request.get<Task[]>('/tasks', { params })
+}
+
+// 根据角色获取任务列表
+export const getTasksByRole = (roleName: string, params?: any) => {
+  return request.get<Task[]>(`/tasks/by-role/${roleName}`, { params })
 }
 
 // 获取任务总数

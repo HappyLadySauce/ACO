@@ -18,20 +18,23 @@ class TaskService:
     
     @staticmethod
     def get_tasks(db: Session, skip: int = 0, limit: int = 100, 
-                  status: Optional[str] = None, task_type: Optional[str] = None) -> List[Task]:
-        """获取任务列表，支持状态和类型过滤"""
+                  status: Optional[str] = None, task_type: Optional[str] = None, 
+                  role_binding: Optional[str] = None) -> List[Task]:
+        """获取任务列表，支持状态、类型和角色过滤"""
         query = db.query(Task)
         
         if status:
             query = query.filter(Task.status == status)
         if task_type:
             query = query.filter(Task.type == task_type)
+        if role_binding:
+            query = query.filter(Task.role_binding == role_binding)
             
         return query.order_by(desc(Task.create_time)).offset(skip).limit(limit).all()
     
     @staticmethod
     def get_tasks_count(db: Session, status: Optional[str] = None, 
-                       task_type: Optional[str] = None) -> int:
+                       task_type: Optional[str] = None, role_binding: Optional[str] = None) -> int:
         """获取任务总数"""
         query = db.query(Task)
         
@@ -39,6 +42,8 @@ class TaskService:
             query = query.filter(Task.status == status)
         if task_type:
             query = query.filter(Task.type == task_type)
+        if role_binding:
+            query = query.filter(Task.role_binding == role_binding)
             
         return query.count()
     
@@ -50,7 +55,8 @@ class TaskService:
             type=task.type,
             phase=task.phase,
             description=task.description,
-            status=task.status or '未分配'
+            status=task.status or '未分配',
+            role_binding=task.role_binding
         )
         db.add(db_task)
         db.commit()
@@ -82,9 +88,29 @@ class TaskService:
                     type=task_data.type,
                     phase=task_data.phase,
                     description=task_data.description,
-                    status=task_data.status or '未分配'
+                    status=task_data.status or '未分配',
+                    role_binding=task_data.role_binding
                 )
                 db.add(db_task)
+                db.flush()  # 立即获取ID
+                
+                # 如果指定了执行角色，创建任务分配
+                if task_data.assignee:
+                    # 查找用户
+                    from app.models.user import User
+                    assignee_user = db.query(User).filter(User.username == task_data.assignee).first()
+                    if assignee_user:
+                        # 创建任务分配
+                        db_assignment = TaskAssignment(
+                            task_id=db_task.id,
+                            user_id=assignee_user.id,
+                            username=task_data.assignee,
+                            status='进行中'
+                        )
+                        db.add(db_assignment)
+                        # 更新任务状态为已分配
+                        db_task.status = '已分配'
+                
                 success_count += 1
                 
             except Exception as e:

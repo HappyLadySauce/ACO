@@ -9,6 +9,8 @@ class TaskBase(BaseModel):
     phase: Optional[str] = None
     description: Optional[str] = None
     status: Optional[str] = '未分配'
+    assignee: Optional[str] = None
+    role_binding: Optional[str] = None
 
 class TaskCreate(TaskBase):
     """创建任务模式"""

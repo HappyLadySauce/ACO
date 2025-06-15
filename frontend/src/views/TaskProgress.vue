@@ -23,10 +23,10 @@
               clearable
             />
           </el-form-item>
-          <el-form-item label="执行人">
+          <el-form-item label="执行角色">
             <el-input 
               v-model="searchForm.username" 
-              placeholder="请输入执行人"
+              placeholder="请输入执行角色"
               clearable
             />
           </el-form-item>
@@ -128,7 +128,7 @@
           <el-table-column prop="id" label="ID" width="60" />
           <el-table-column prop="task_name" label="任务名称" min-width="150" />
           <el-table-column prop="task_type" label="任务类型" width="120" />
-          <el-table-column prop="username" label="执行人" width="100" />
+          <el-table-column prop="username" label="执行角色" width="100" />
           <el-table-column prop="status" label="状态" width="100">
             <template #default="scope">
               <el-tag :type="getStatusType(scope.row.status)">
@@ -201,7 +201,7 @@
           <el-descriptions-item label="任务ID">{{ currentTask.id }}</el-descriptions-item>
           <el-descriptions-item label="任务名称">{{ currentTask.task_name }}</el-descriptions-item>
           <el-descriptions-item label="任务类型">{{ currentTask.task_type }}</el-descriptions-item>
-          <el-descriptions-item label="执行人">{{ currentTask.username }}</el-descriptions-item>
+          <el-descriptions-item label="执行角色">{{ currentTask.username }}</el-descriptions-item>
           <el-descriptions-item label="状态">
             <el-tag :type="getStatusType(currentTask.status)">
               {{ currentTask.status }}
@@ -237,7 +237,7 @@
         <el-form-item label="任务名称">
           <el-input v-model="updateForm.task_name" disabled />
         </el-form-item>
-        <el-form-item label="执行人">
+        <el-form-item label="执行角色">
           <el-input v-model="updateForm.username" disabled />
         </el-form-item>
         <el-form-item label="状态" prop="status">

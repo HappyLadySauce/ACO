@@ -43,6 +43,15 @@
               <el-option label="完成阶段" value="完成阶段" />
             </el-select>
           </el-form-item>
+          <el-form-item label="绑定角色">
+            <el-select v-model="searchForm.role_binding" placeholder="选择绑定角色" clearable>
+              <el-option label="系统分析师" value="系统分析师" />
+              <el-option label="网络工程师" value="网络工程师" />
+              <el-option label="系统架构工程师" value="系统架构工程师" />
+              <el-option label="数据运维工程师" value="数据运维工程师" />
+              <el-option label="孪生平台" value="孪生平台" />
+            </el-select>
+          </el-form-item>
           <el-form-item>
             <el-button type="primary" @click="handleSearch">
               <el-icon><Search /></el-icon>
@@ -57,10 +66,11 @@
       <el-table :data="tasks" v-loading="loading" style="width: 100%">
         <el-table-column prop="id" label="任务ID" width="80" />
         <el-table-column prop="name" label="任务名称" min-width="120" />
-        <el-table-column prop="type" label="任务类型" width="120" />
-        <el-table-column prop="phase" label="阶段" width="100" />
-        <el-table-column prop="description" label="任务描述" show-overflow-tooltip min-width="150" />
-        <el-table-column label="执行人" width="120">
+                  <el-table-column prop="type" label="任务类型" width="120" />
+          <el-table-column prop="phase" label="阶段" width="100" />
+          <el-table-column prop="description" label="任务描述" show-overflow-tooltip min-width="150" />
+          <el-table-column prop="role_binding" label="绑定角色" width="120" />
+          <el-table-column label="执行角色" width="120">
           <template #default="scope">
             <span v-if="scope.row.assignments && scope.row.assignments.length > 0">
               {{ scope.row.assignments.map((a: any) => a.username).join(', ') }}
@@ -138,6 +148,39 @@
             :rows="4"
             placeholder="请输入任务描述" 
           />
+        </el-form-item>
+        <el-form-item label="绑定角色" prop="role_binding">
+          <el-select 
+            v-model="taskForm.role_binding" 
+            placeholder="请选择绑定角色"
+            style="width: 100%"
+            clearable
+          >
+            <el-option label="系统分析师" value="系统分析师" />
+            <el-option label="网络工程师" value="网络工程师" />
+            <el-option label="系统架构工程师" value="系统架构工程师" />
+            <el-option label="数据运维工程师" value="数据运维工程师" />
+            <el-option label="孪生平台" value="孪生平台" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="执行角色" prop="assignee">
+          <el-select 
+            v-model="taskForm.assignee" 
+            placeholder="请选择执行角色"
+            style="width: 100%"
+            clearable
+            filterable
+          >
+            <el-option 
+              v-for="user in availableUsers" 
+              :key="user.id" 
+              :label="user.username" 
+              :value="user.username"
+            >
+              <span>{{ user.username }}</span>
+              <span style="float: right; color: #8492a6; font-size: 13px">{{ user.role }}</span>
+            </el-option>
+          </el-select>
         </el-form-item>
       </el-form>
       
@@ -277,6 +320,8 @@ import {
   SuccessFilled, CircleCloseFilled 
 } from '@element-plus/icons-vue'
 import { getTasks, getTasksCount, createTask, updateTask, deleteTask, getTask, bulkImportTasks, type TaskBulkImportResult } from '@/api/task'
+import { getUserList } from '@/api/user'
+import type { User } from '@/types/user'
 
 interface Task {
   id: number
@@ -302,7 +347,8 @@ const selectedFile = ref<File | null>(null)
 const searchForm = reactive({
   name: '',
   type: '',
-  phase: ''
+  phase: '',
+  role_binding: ''
 })
 
 const taskForm = reactive({
@@ -310,7 +356,9 @@ const taskForm = reactive({
   name: '',
   type: '',
   phase: '',
-  description: ''
+  description: '',
+  assignee: '',
+  role_binding: ''
 })
 
 const pagination = reactive({
@@ -320,6 +368,7 @@ const pagination = reactive({
 })
 
 const tasks = ref<Task[]>([])
+const availableUsers = ref<User[]>([])
 
 const importResult = reactive<TaskBulkImportResult>({
   success_count: 0,
@@ -342,6 +391,9 @@ const rules = {
   description: [
     { required: true, message: '请输入任务描述', trigger: 'blur' },
     { min: 5, max: 500, message: '任务描述长度在 5 到 500 个字符', trigger: 'blur' }
+  ],
+  assignee: [
+    { required: false, message: '请选择执行角色', trigger: 'change' }
   ]
 }
 
@@ -351,7 +403,8 @@ const loadTasks = async () => {
     const response = await getTasks({
       skip: (pagination.currentPage - 1) * pagination.pageSize,
       limit: pagination.pageSize,
-      task_type: searchForm.type || undefined
+      task_type: searchForm.type || undefined,
+      role_binding: searchForm.role_binding || undefined
     })
     
     // 直接使用任务数据，不获取分配信息
@@ -359,7 +412,8 @@ const loadTasks = async () => {
     
     // 获取总数
     const countResponse = await getTasksCount({
-      task_type: searchForm.type || undefined
+      task_type: searchForm.type || undefined,
+      role_binding: searchForm.role_binding || undefined
     })
     pagination.total = countResponse.data?.count || 0
   } catch (error) {
@@ -379,6 +433,7 @@ const handleReset = () => {
   searchForm.name = ''
   searchForm.type = ''
   searchForm.phase = ''
+  searchForm.role_binding = ''
   pagination.currentPage = 1
   loadTasks()
 }
@@ -429,7 +484,9 @@ const handleSubmit = async () => {
         name: taskForm.name,
         type: taskForm.type,
         phase: taskForm.phase,
-        description: taskForm.description
+        description: taskForm.description,
+        assignee: taskForm.assignee,
+        role_binding: taskForm.role_binding
       })
     } else {
       await createTask({
@@ -437,7 +494,9 @@ const handleSubmit = async () => {
         type: taskForm.type,
         phase: taskForm.phase,
         description: taskForm.description,
-        status: '未分配'
+        status: '未分配',
+        assignee: taskForm.assignee,
+        role_binding: taskForm.role_binding
       })
     }
     
@@ -456,6 +515,8 @@ const resetForm = () => {
   taskForm.type = ''
   taskForm.phase = ''
   taskForm.description = ''
+  taskForm.assignee = ''
+  taskForm.role_binding = ''
 }
 
 const handleSizeChange = (val: number) => {
@@ -480,11 +541,11 @@ const downloadTemplate = async () => {
   try {
     // 创建CSV内容，包含标题行和示例数据
     const csvData = [
-      ['任务名称', '任务类型', '阶段', '任务描述'],
-              ['网络架构设计', '网络搭建任务', '计划阶段', '设计企业网络拓扑结构和配置方案'],
-        ['服务器环境搭建', '系统构建任务', '执行阶段', '搭建生产环境服务器和应用系统'],
-        ['监控系统配置', '运维监管任务', '配置阶段', '配置系统监控和告警机制'],
-        ['日志安全审计', '日志安全任务', '监控阶段', '分析系统日志并识别安全威胁']
+      ['任务名称', '任务类型', '阶段', '任务描述', '绑定角色', '执行角色'],
+      ['网络架构设计', '网络搭建任务', '计划阶段', '设计企业网络拓扑结构和配置方案', '网络工程师', 'admin'],
+      ['服务器环境搭建', '系统构建任务', '执行阶段', '搭建生产环境服务器和应用系统', '系统架构工程师', 'operator1'],
+      ['监控系统配置', '运维监管任务', '配置阶段', '配置系统监控和告警机制', '数据运维工程师', ''],
+      ['日志安全审计', '日志安全任务', '监控阶段', '分析系统日志并识别安全威胁', '系统分析师', 'admin']
     ]
     
     // 将数组转换为CSV格式字符串
@@ -608,8 +669,20 @@ const handleImport = async () => {
   }
 }
 
+// 加载可用用户列表
+const loadAvailableUsers = async () => {
+  try {
+    const response = await getUserList({ limit: 100 })
+    availableUsers.value = response.data?.filter(user => user.status === 'active') || []
+  } catch (error) {
+    console.error('加载用户列表失败:', error)
+    ElMessage.error('加载用户列表失败')
+  }
+}
+
 onMounted(() => {
   loadTasks()
+  loadAvailableUsers()
 })
 </script>
 

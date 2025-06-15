@@ -37,7 +37,6 @@
           <div class="image-stats">
             <!-- 图片 -->
             <span class="stat-item stat-blue"> <img src="@/assets/icon/组 3695.png" alt="running" class="stat-icon"> {{ getStatusCount('running') }}个</span>
-            <span class="stat-item stat-black"> <img src="@/assets/icon/组 3695 (2).png" alt="stopped" class="stat-icon"> {{ getStatusCount('stopped') }}个</span>
             <span class="stat-item stat-red"> <img src="@/assets/icon/组 3695 (1).png" alt="error" class="stat-icon"> {{ getStatusCount('error') }}个</span>
           </div>
         </div>
@@ -257,76 +256,6 @@ const imageList = reactive([
     updateTime: '2024-01-24 11:15:06',
     isEnabled: true,
     status: 'running',
-    topic: 'office',
-    management: 'admin',
-    imageGroup: 'windows'
-  },
-  {
-    name: '开发者角色',
-    system: 'windows11 64bit',
-    systemDisplayName: 'Windows 11',
-    systemDiskUsage: '25.7GB/150.0GB',
-    dataDiskUsage: '35.4GB/100.0GB',
-    createTime: '2024-01-19 15:45:29',
-    updateTime: '2024-01-25 13:20:18',
-    isEnabled: false,
-    status: 'stopped',
-    topic: 'dev',
-    management: 'admin',
-    imageGroup: 'windows'
-  },
-  {
-    name: '测试人员角色',
-    system: 'windows10 64bit',
-    systemDisplayName: 'Windows 10',
-    systemDiskUsage: '14.9GB/120.0GB',
-    dataDiskUsage: '18.7GB/50.0GB',
-    createTime: '2024-01-20 08:30:52',
-    updateTime: '2024-01-26 10:40:35',
-    isEnabled: false,
-    status: 'stopped',
-    topic: 'test',
-    management: 'user',
-    imageGroup: 'windows'
-  },
-  {
-    name: '运维角色',
-    system: 'linux ubuntu 20.04',
-    systemDisplayName: 'Ubuntu 20.04',
-    systemDiskUsage: '8.2GB/80.0GB',
-    dataDiskUsage: '12.5GB/100.0GB',
-    createTime: '2024-01-21 12:00:14',
-    updateTime: '2024-01-27 15:10:49',
-    isEnabled: false,
-    status: 'stopped',
-    topic: 'dev',
-    management: 'admin',
-    imageGroup: 'linux'
-  },
-  {
-    name: '安全审计角色',
-    system: 'linux centos 8',
-    systemDisplayName: 'CentOS 8',
-    systemDiskUsage: '11.8GB/80.0GB',
-    dataDiskUsage: '25.3GB/100.0GB',
-    createTime: '2024-01-22 16:30:07',
-    updateTime: '2024-01-28 09:25:53',
-    isEnabled: false,
-    status: 'stopped',
-    topic: 'office',
-    management: 'admin',
-    imageGroup: 'linux'
-  },
-  {
-    name: '数据库管理员',
-    system: 'windows10 64bit',
-    systemDisplayName: 'Windows 10',
-    systemDiskUsage: '18.5GB/120.0GB',
-    dataDiskUsage: '12.3GB/50.0GB',
-    createTime: '2024-01-23 08:15:32',
-    updateTime: '2024-01-29 14:45:18',
-    isEnabled: false,
-    status: 'error',
     topic: 'office',
     management: 'admin',
     imageGroup: 'windows'

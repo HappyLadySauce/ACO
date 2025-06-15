@@ -204,24 +204,6 @@
             <img src="@/assets/icon/设备.png" alt="设备列表" class="table-icon-img" />
             设备列表
           </h3>
-          <div class="table-actions">
-            <button class="action-btn create-btn" @click="handleCreateDevice">
-              <img src="@/assets/icon/添加.png" alt="添加设备" class="btn-icon-img" />
-              添加设备
-            </button>
-            <button class="action-btn download-btn" @click="handleManageDevice">
-              <img src="@/assets/icon/设备.png" alt="设备管理" class="btn-icon-img" />
-              设备管理
-            </button>
-            <button class="action-btn progress-btn" @click="handleMonitorDevice">
-              <img src="@/assets/icon/系统参数.png" alt="设备监控" class="btn-icon-img" />
-              设备监控
-            </button>
-            <button class="action-btn import-btn" @click="handleRefreshData">
-              <img src="@/assets/icon/upload.png" alt="刷新数据" class="btn-icon-img" />
-              刷新数据
-            </button>
-          </div>
         </div>
         <div class="table-content">
           <div v-if="deviceLoading" class="loading-container">

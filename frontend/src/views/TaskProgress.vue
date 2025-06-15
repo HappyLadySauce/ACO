@@ -4,12 +4,6 @@
       <template #header>
         <div class="card-header">
           <span>{{ authStore.isAdmin ? '全部任务进度' : '我的任务进度' }}</span>
-          <div class="header-actions">
-            <el-button @click="refreshData">
-              <el-icon><Refresh /></el-icon>
-              刷新数据
-            </el-button>
-          </div>
         </div>
       </template>
 
@@ -159,17 +153,13 @@
           <el-table-column prop="assigned_at" label="分配时间" width="150" />
           <el-table-column prop="last_update" label="最后更新" width="150" />
           <el-table-column prop="comments" label="备注" min-width="120" show-overflow-tooltip />
-          <el-table-column label="操作" width="160" fixed="right">
+          <el-table-column label="操作" width="180" fixed="right">
             <template #default="scope">
-              <el-button size="small" @click="handleViewDetail(scope.row)">
-                详情
+              <el-button size="small" type="primary" @click="handleViewDetail(scope.row)">
+                查看详情
               </el-button>
-              <el-button 
-                size="small" 
-                type="primary" 
-                @click="handleUpdateProgress(scope.row)"
-              >
-                修改进度
+              <el-button size="small" type="success" @click="handleProgressManagementTable(scope.row)">
+                进度管理
               </el-button>
             </template>
           </el-table-column>
@@ -210,14 +200,12 @@
         <div class="task-description">
           <label>任务描述</label>
           <el-input 
-            v-model="currentTask.task_name"
+            v-model="currentTask.task_description"
             type="textarea"
             :rows="3"
-            placeholder="请输入任务描述"
+            disabled
+            placeholder="任务描述"
           />
-          <div class="description-text">
-            将全网设备接入INC进行统一管理，构建区域控制，并下发安全配置
-          </div>
         </div>
 
         <!-- 进度信息 -->
@@ -241,7 +229,7 @@
           <div class="table-header">
             <div class="header-cell">任务ID</div>
             <div class="header-cell">任务类型</div>
-            <div class="header-cell">任务类型</div>
+            <div class="header-cell">任务状态</div>
             <div class="header-cell">阶段任务</div>
             <div class="header-cell">任务描述</div>
             <div class="header-cell">执行角色</div>
@@ -250,7 +238,11 @@
             <div class="table-row">
               <div class="table-cell">{{ currentTask.task_id }}</div>
               <div class="table-cell">{{ currentTask.task_type }}</div>
-              <div class="table-cell">{{ currentTask.task_type }}</div>
+              <div class="table-cell">
+                <el-tag :type="getStatusType(currentTask.status)">
+                  {{ currentTask.status }}
+                </el-tag>
+              </div>
               <div class="table-cell">执行阶段</div>
               <div class="table-cell">{{ currentTask.task_name }}</div>
               <div class="table-cell">
@@ -263,35 +255,51 @@
           </div>
         </div>
 
-        <!-- 底部操作按钮 -->
-        <div class="bottom-actions">
-          <el-button type="primary" size="large">最新进度</el-button>
-          <el-button size="large">更新绩效</el-button>
-          <el-button size="large">刷新数据</el-button>
+        <!-- 绩效评分明细表格 -->
+        <div class="performance-details-section">
+          <h3 class="section-title">绩效评分明细</h3>
+          <div class="performance-details-table">
+            <div class="table-header">
+              <div class="header-cell">序号</div>
+              <div class="header-cell">任务名称</div>
+              <div class="header-cell">任务明细</div>
+              <div class="header-cell">测评点</div>
+              <div class="header-cell">得分依据</div>
+            </div>
+            <div class="table-body">
+              <div class="table-row" v-for="detail in performanceDetails" :key="detail.id">
+                <div class="table-cell">{{ detail.sequence }}</div>
+                <div class="table-cell">{{ detail.task_name }}</div>
+                <div class="table-cell">{{ detail.task_detail }}</div>
+                <div class="table-cell">{{ detail.evaluation_point }}</div>
+                <div class="table-cell">{{ detail.score_basis }}</div>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    </el-dialog>
+              </div>
+      </el-dialog>
 
-    <!-- 更新进度对话框 -->
+    <!-- 进度管理对话框 -->
     <el-dialog
-      v-model="updateDialogVisible"
-      title="修改任务进度"
+      v-model="progressManagementDialogVisible"
+      title="进度管理"
       width="600px"
     >
       <el-form
-        ref="updateFormRef"
-        :model="updateForm"
-        :rules="updateRules"
+        ref="progressManagementFormRef"
+        :model="progressManagementForm"
+        :rules="progressManagementRules"
         label-width="100px"
       >
         <el-form-item label="任务名称">
-          <el-input v-model="updateForm.task_name" disabled />
+          <el-input v-model="progressManagementForm.task_name" disabled />
         </el-form-item>
         <el-form-item label="执行角色">
-          <el-input v-model="updateForm.username" disabled />
+          <el-input v-model="progressManagementForm.username" disabled />
         </el-form-item>
         <el-form-item label="状态" prop="status">
-          <el-select v-model="updateForm.status" placeholder="选择状态">
+          <el-select v-model="progressManagementForm.status" placeholder="选择状态">
             <el-option label="进行中" value="进行中" />
             <el-option label="已完成" value="已完成" />
             <el-option label="已暂停" value="已暂停" />
@@ -299,18 +307,18 @@
         </el-form-item>
         <el-form-item label="进度" prop="progress">
           <el-slider 
-            v-model="updateForm.progress" 
+            v-model="progressManagementForm.progress" 
             :max="100" 
             show-input 
             :format-tooltip="(val: number) => `${val}%`"
           />
         </el-form-item>
         <el-form-item label="绩效评分" prop="performance_score">
-          <el-rate v-model="updateForm.performance_score" :max="5" show-text />
+          <el-rate v-model="progressManagementForm.performance_score" :max="5" show-text />
         </el-form-item>
         <el-form-item label="备注说明" prop="comments">
           <el-input 
-            v-model="updateForm.comments" 
+            v-model="progressManagementForm.comments" 
             type="textarea"
             :rows="4"
             placeholder="请输入更新说明" 
@@ -320,21 +328,20 @@
       
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="updateDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleUpdateSubmit">
+          <el-button @click="progressManagementDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleProgressManagementSubmit">
             确定更新
           </el-button>
         </span>
       </template>
     </el-dialog>
-  </div>
-</template>
+    </div>
+  </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, nextTick } from 'vue'
 import { ElMessage, type FormInstance } from 'element-plus'
 import { 
-  Refresh, 
   Search, 
   Document, 
   Clock, 
@@ -342,14 +349,16 @@ import {
   TrendCharts 
 } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
-import { getMyTasks, getMyTaskStats, updateMyTask, getTaskAssignments } from '@/api/task'
+import { getMyTasks, getMyTaskStats, getTaskAssignments, updateTaskAssignment } from '@/api/task'
 import { getTaskAssignmentStats } from '@/api/taskAssignment'
+import { updateTaskProgress } from '@/api/taskProgress'
 import { useAuthStore } from '@/store/modules/auth'
 
 interface TaskProgress {
   id: number
   task_id: number
   task_name: string
+  task_description: string
   task_type: string
   username: string
   status: string
@@ -367,11 +376,22 @@ interface Stats {
   avgProgress: number
 }
 
+interface PerformanceDetail {
+  id: number
+  sequence: string
+  task_name: string
+  task_detail: string
+  evaluation_point: string
+  completion_rate: number
+  score_basis: string
+  performance_score: number
+}
+
 const authStore = useAuthStore()
 const loading = ref(false)
 const detailDialogVisible = ref(false)
-const updateDialogVisible = ref(false)
-const updateFormRef = ref<FormInstance>()
+const progressManagementDialogVisible = ref(false)
+const progressManagementFormRef = ref<FormInstance>()
 const statusChartRef = ref<HTMLElement>()
 const progressChartRef = ref<HTMLElement>()
 
@@ -382,7 +402,13 @@ const searchForm = reactive({
   dateRange: [] as string[]
 })
 
-const updateForm = reactive({
+const pagination = reactive({
+  currentPage: 1,
+  pageSize: 10,
+  total: 0
+})
+
+const progressManagementForm = reactive({
   id: 0,
   task_name: '',
   username: '',
@@ -390,12 +416,6 @@ const updateForm = reactive({
   progress: 0,
   performance_score: 0,
   comments: ''
-})
-
-const pagination = reactive({
-  currentPage: 1,
-  pageSize: 10,
-  total: 0
 })
 
 const progressList = ref<TaskProgress[]>([])
@@ -407,7 +427,9 @@ const stats = ref<Stats>({
   avgProgress: 0
 })
 
-const updateRules = {
+const performanceDetails = ref<PerformanceDetail[]>([])
+
+const progressManagementRules = {
   status: [
     { required: true, message: '请选择状态', trigger: 'change' }
   ],
@@ -444,6 +466,27 @@ const getProgressColor = (percentage: number) => {
   }
 }
 
+const getTaskDescription = (taskType?: string, taskName?: string) => {
+  // 根据任务类型和任务名称生成描述
+  if (taskName?.includes('网络架构')) {
+    return '设计企业网络拓扑结构和配置方案，确保网络架构的安全性和可扩展性'
+  } else if (taskName?.includes('服务器') || taskName?.includes('环境')) {
+    return '搭建生产环境服务器和应用系统，配置负载均衡和高可用架构'
+  } else if (taskName?.includes('监控') || taskName?.includes('配置')) {
+    return '配置系统监控和告警机制，建立完善的运维监控体系'
+  } else if (taskName?.includes('安全') || taskName?.includes('审计')) {
+    return '分析系统日志并识别安全威胁，建立安全审计机制'
+  } else if (taskType?.includes('网络')) {
+    return '将全网设备接入INC进行统一管理，构建区域控制，并下发安全配置'
+  } else if (taskType?.includes('系统')) {
+    return '配置和优化系统架构，确保系统性能和稳定性'
+  } else if (taskType?.includes('安全')) {
+    return '实施安全防护措施，建立完善的安全防护体系'
+  } else {
+    return '执行相关技术任务，确保项目目标的顺利完成'
+  }
+}
+
 const loadProgressData = async () => {
   loading.value = true
   try {
@@ -469,6 +512,7 @@ const loadProgressData = async () => {
       id: item.id,
       task_id: item.task_id,
       task_name: item.task_name || `任务 ${item.task_id}`,
+      task_description: getTaskDescription(item.task_type, item.task_name),
       task_type: item.task_type || '未知类型',
       username: item.username,
       status: item.status,
@@ -644,19 +688,25 @@ const handleReset = () => {
   loadProgressData()
 }
 
-const refreshData = () => {
-  loadProgressData()
-  ElMessage.success('数据已刷新')
-}
+
 
 const handleViewDetail = (row: TaskProgress) => {
   currentTask.value = row
+  loadPerformanceDetails(row.id)
   detailDialogVisible.value = true
 }
 
-const handleUpdateProgress = (row: TaskProgress) => {
-  updateDialogVisible.value = true
-  Object.assign(updateForm, {
+const handleProgressManagement = () => {
+  // 进度管理功能，可以跳转到进度管理页面或弹出管理对话框
+  ElMessage.info('进度管理功能开发中...')
+  // 这里可以添加具体的进度管理逻辑
+  // 例如：router.push('/progress-management')
+}
+
+const handleProgressManagementTable = (row: TaskProgress) => {
+  // 表格中的进度管理功能
+  progressManagementDialogVisible.value = true
+  Object.assign(progressManagementForm, {
     id: row.id,
     task_name: row.task_name,
     username: row.username,
@@ -667,25 +717,123 @@ const handleUpdateProgress = (row: TaskProgress) => {
   })
 }
 
-const handleUpdateSubmit = async () => {
-  if (!updateFormRef.value) return
+const handleProgressManagementSubmit = async () => {
+  if (!progressManagementFormRef.value) return
   
   try {
-    await updateFormRef.value.validate()
+    await progressManagementFormRef.value.validate()
     
-    await updateMyTask(updateForm.id, {
-      status: updateForm.status,
-      progress: updateForm.progress,
-      comments: updateForm.comments
-    })
+    // 根据用户角色选择合适的API
+    if (authStore.isAdmin) {
+      await updateTaskAssignment(progressManagementForm.id, {
+        status: progressManagementForm.status,
+        progress: progressManagementForm.progress,
+        performance_score: progressManagementForm.performance_score,
+        comments: progressManagementForm.comments
+      })
+    } else {
+      await updateTaskProgress(progressManagementForm.id, {
+        status: progressManagementForm.status,
+        progress: progressManagementForm.progress,
+        performance_score: progressManagementForm.performance_score,
+        comments: progressManagementForm.comments
+      })
+    }
     
     ElMessage.success('进度更新成功')
-    updateDialogVisible.value = false
+    progressManagementDialogVisible.value = false
     loadProgressData()
   } catch (error: any) {
     ElMessage.error('更新失败')
     console.error('更新任务进度失败:', error)
   }
+}
+
+const loadPerformanceDetails = (taskId: number) => {
+  // 这里是模拟数据，实际应该从后端API获取
+  // 根据不同任务类型生成相应的绩效评分明细
+  performanceDetails.value = [
+    {
+      id: 1,
+      sequence: '1.1',
+      task_name: '用户流量访问测试',
+      task_detail: '测试用户访问系统的流量情况，监控并发访问性能',
+      evaluation_point: '访问流量监控',
+      completion_rate: 100,
+      score_basis: '成功监控到用户访问流量，并发处理能力达标',
+      performance_score: 15
+    },
+    {
+      id: 2,
+      sequence: '1.2',
+      task_name: '系统性能测试',
+      task_detail: '测试系统在高负载下的性能表现，包括响应时间和吞吐量',
+      evaluation_point: '性能指标监控',
+      completion_rate: 95,
+      score_basis: '系统响应时间符合要求，吞吐量达到预期指标',
+      performance_score: 12
+    },
+    {
+      id: 3,
+      sequence: '2.1',
+      task_name: '安全漏洞扫描',
+      task_detail: '对系统进行全面的安全漏洞扫描，包括SQL注入、XSS等',
+      evaluation_point: '漏洞检测',
+      completion_rate: 100,
+      score_basis: '发现并修复所有高危漏洞，安全评估通过',
+      performance_score: 20
+    },
+    {
+      id: 4,
+      sequence: '2.2',
+      task_name: '权限管理测试',
+      task_detail: '测试系统的权限控制机制，验证角色权限分配',
+      evaluation_point: '权限验证',
+      completion_rate: 98,
+      score_basis: '权限控制机制运行正常，访问控制有效',
+      performance_score: 18
+    },
+    {
+      id: 5,
+      sequence: '3.1',
+      task_name: '数据备份恢复测试',
+      task_detail: '测试系统数据备份和恢复机制的有效性',
+      evaluation_point: '备份恢复验证',
+      completion_rate: 92,
+      score_basis: '备份恢复流程完整，数据完整性验证通过',
+      performance_score: 16
+    },
+    {
+      id: 6,
+      sequence: '3.2',
+      task_name: '日志审计配置',
+      task_detail: '配置系统日志审计功能，确保操作可追溯',
+      evaluation_point: '审计日志',
+      completion_rate: 100,
+      score_basis: '日志记录完整，审计功能正常运行',
+      performance_score: 14
+    },
+    {
+      id: 7,
+      sequence: '4.1',
+      task_name: '网络安全配置',
+      task_detail: '配置防火墙规则，设置网络访问控制策略',
+      evaluation_point: '网络安全',
+      completion_rate: 96,
+      score_basis: '防火墙规则配置正确，网络隔离有效',
+      performance_score: 17
+    },
+    {
+      id: 8,
+      sequence: '4.2',
+      task_name: '入侵检测部署',
+      task_detail: '部署入侵检测系统，实现实时安全监控',
+      evaluation_point: '入侵检测',
+      completion_rate: 88,
+      score_basis: '入侵检测系统正常运行，告警机制有效',
+      performance_score: 13
+    }
+  ]
 }
 
 const handleSizeChange = (val: number) => {
@@ -825,13 +973,15 @@ onMounted(() => {
       color: #333;
     }
     
-    .description-text {
+    .description-detail {
       margin-top: 10px;
-      padding: 10px;
+      padding: 12px;
       background: white;
       border-radius: 4px;
       color: #666;
       font-size: 14px;
+      line-height: 1.6;
+      border-left: 4px solid #409eff;
     }
   }
 
@@ -931,6 +1081,122 @@ onMounted(() => {
               opacity: 0.9;
             }
           }
+        }
+      }
+    }
+  }
+
+  .performance-details-section {
+    margin-bottom: 20px;
+    
+    .section-title {
+      margin-bottom: 15px;
+      font-size: 16px;
+      font-weight: bold;
+      color: #333;
+      border-left: 4px solid #409eff;
+      padding-left: 10px;
+    }
+  }
+
+  .performance-details-table {
+    margin-bottom: 20px;
+    border: 1px solid #e4e7ed;
+    border-radius: 8px;
+    overflow: hidden;
+    
+    .table-header {
+      display: flex;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      
+      .header-cell {
+        flex: 1;
+        padding: 12px;
+        font-weight: bold;
+        text-align: center;
+        border-right: 1px solid rgba(255, 255, 255, 0.2);
+        font-size: 14px;
+        
+        &:last-child {
+          border-right: none;
+        }
+      }
+    }
+    
+    .table-body {
+      .table-row {
+        display: flex;
+        background: white;
+        border-bottom: 1px solid #e4e7ed;
+        
+        &:last-child {
+          border-bottom: none;
+        }
+        
+        &:hover {
+          background: #f5f7fa;
+        }
+        
+        .table-cell {
+          flex: 1;
+          padding: 12px;
+          text-align: center;
+          border-right: 1px solid #e4e7ed;
+          font-size: 13px;
+          
+          &:last-child {
+            border-right: none;
+          }
+          
+          .completion-text {
+            display: block;
+            margin-top: 4px;
+            font-size: 12px;
+            color: #666;
+          }
+          
+          .score-value {
+            font-weight: bold;
+            font-size: 16px;
+            color: #67c23a;
+            background: linear-gradient(135deg, #67c23a, #85ce61);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+          }
+        }
+      }
+    }
+  }
+
+  .performance-summary {
+    display: flex;
+    justify-content: space-around;
+    padding: 20px;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border-radius: 8px;
+    margin-top: 15px;
+    
+    .summary-item {
+      text-align: center;
+      
+      .summary-label {
+        display: block;
+        font-size: 14px;
+        color: #666;
+        margin-bottom: 5px;
+      }
+      
+      .summary-value {
+        font-size: 18px;
+        font-weight: bold;
+        color: #333;
+        
+        &.highlight {
+          font-size: 22px;
+          color: #67c23a;
+          text-shadow: 0 2px 4px rgba(103, 194, 58, 0.3);
         }
       }
     }

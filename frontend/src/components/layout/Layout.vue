@@ -30,11 +30,6 @@
       
       <div class="header-right">
         <div class="header-actions">
-          <el-tooltip content="刷新" placement="bottom">
-            <div class="action-btn" @click="handleRefresh">
-              <img src="@/assets/icon/刷新.png" alt="刷新" class="action-icon" />
-            </div>
-          </el-tooltip>
           
           <el-tooltip content="通知" placement="bottom">
             <div class="action-btn notification-btn" @click="handleNotification">
@@ -200,12 +195,6 @@ const handleLogout = async () => {
   } catch (error) {
     // 用户取消了操作
   }
-}
-
-// 头部操作方法
-const handleRefresh = () => {
-  ElMessage.success('页面已刷新')
-  window.location.reload()
 }
 
 const handleNotification = () => {
